@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.http import HttpResponse
 from debug_views import health_check, debug_info
+from create_admin_view import create_admin_user
 
 # Simple favicon handler
 def favicon_view(request):
@@ -27,6 +28,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('dashboard/', include('dashboard.urls')),
     path('mikrotik/', include('mikrotik_integration.urls')),
+    path('auth/', include('authentication.urls')),
     path('', include('billing.urls')),
     path('payments/', include('payments.urls')),
     path('payments/', include('payments.webhook_urls')),

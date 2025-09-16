@@ -39,6 +39,11 @@ else:
 # Ensure trailing slashes are handled properly
 APPEND_SLASH = True
 
+# Custom authentication URLs
+LOGIN_URL = '/auth/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/auth/login/'
+
 
 # Application definition
 
@@ -56,6 +61,7 @@ INSTALLED_APPS = [
     'mikrotik_integration',
     'radius',
     'dashboard',
+    'authentication',
 ]
 
 MIDDLEWARE = [
