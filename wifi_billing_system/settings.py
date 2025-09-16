@@ -44,6 +44,9 @@ LOGIN_URL = '/auth/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/auth/login/'
 
+# Override allauth URLs to use our custom views
+ACCOUNT_ADAPTER = 'authentication.adapters.CustomAccountAdapter'
+
 
 # Application definition
 

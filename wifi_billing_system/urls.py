@@ -24,15 +24,22 @@ from create_admin_view import create_admin_user
 def favicon_view(request):
     return HttpResponse(status=204)  # No Content
 
+# Root redirect view
+def root_redirect(request):
+    from django.shortcuts import redirect
+    return redirect('/auth/login/')
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('dashboard/', include('dashboard.urls')),
     path('mikrotik/', include('mikrotik_integration.urls')),
     path('auth/', include('authentication.urls')),
     path('accounts/', include('allauth.urls')),  # Allauth URLs for OAuth
-    path('', include('billing.urls')),
+    path('billing/', include('billing.urls')),  # Move billing to /billing/ prefix
     path('payments/', include('payments.urls')),
     path('payments/', include('payments.webhook_urls')),
+    # Root redirect to authentication
+    path('', root_redirect, name='root_redirect'),
     # Temporary debug endpoints
     path('health/', health_check, name='health_check'),
     path('debug/', debug_info, name='debug_info'),
