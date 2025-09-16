@@ -29,8 +29,19 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-%p8tp-#_ex9oxw15b!g9m
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 # Parse allowed hosts from environment variable or use defaults
+# Include Railway domain for initial deployment
 allowed_hosts = config('ALLOWED_HOSTS', default='localhost,127.0.0.1')
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts.split(',')]
+
+# Auto-detect Railway deployment and add the domain
+if DATABASE_URL:  # If DATABASE_URL exists, we're likely on Railway
+    railway_host = 'beat-production-5003.up.railway.app'
+    if railway_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(railway_host)
+    
+    # Also allow .railway.app subdomain pattern for Railway
+    if '.railway.app' not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append('.railway.app')
 
 
 # Application definition
