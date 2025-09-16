@@ -76,6 +76,36 @@ def create_superuser_if_none():
         print("ℹ️ Superuser already exists, skipping creation")
         return True
 
+def setup_site():
+    """Set up Django Site for allauth integration"""
+    from django.contrib.sites.models import Site
+    from django.conf import settings
+    
+    try:
+        # Update or create the Site with SITE_ID = 1
+        site, created = Site.objects.get_or_create(
+            id=settings.SITE_ID,
+            defaults={
+                'domain': 'beat-production-5003.up.railway.app',
+                'name': 'BROADCOM NETWORKS'
+            }
+        )
+        
+        if not created:
+            # Update existing site
+            site.domain = 'beat-production-5003.up.railway.app'
+            site.name = 'BROADCOM NETWORKS'
+            site.save()
+            print(f"✅ Updated Site: {site.name} ({site.domain})")
+        else:
+            print(f"✅ Created Site: {site.name} ({site.domain})")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error setting up site: {e}")
+        return False
+
 def create_sample_data():
     """Create sample WiFi plans if none exist"""
     from billing.models import WifiPlan
@@ -150,6 +180,10 @@ def main():
     
     # Collect static files
     if not collect_static_files():
+        success = False
+    
+    # Set up Django Site for allauth
+    if not setup_site():
         success = False
     
     # Create superuser if needed

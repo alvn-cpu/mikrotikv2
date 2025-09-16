@@ -315,6 +315,23 @@ if SENTRY_DSN:
 # Required for django-allauth
 SITE_ID = 1
 
+# Auto-create Site if it doesn't exist
+from django.core.management.commands.runserver import Command as RunServerCommand
+def ensure_site_exists():
+    try:
+        from django.contrib.sites.models import Site
+        site, created = Site.objects.get_or_create(
+            id=SITE_ID,
+            defaults={
+                'domain': 'beat-production-5003.up.railway.app',
+                'name': 'BROADCOM NETWORKS'
+            }
+        )
+        if created:
+            print(f"Created Site: {site.name} ({site.domain})")
+    except Exception:
+        pass  # Ignore errors during startup
+
 # Authentication backends
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  # Default Django backend
@@ -326,7 +343,7 @@ ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 ACCOUNT_USERNAME_REQUIRED = True
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # Disable for now until email is configured
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5

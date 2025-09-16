@@ -11,9 +11,17 @@ import re
 
 
 def portal_home(request):
-    """Simple WiFi captive portal - redirect to plans"""
+    """Simple WiFi captive portal - redirect to plans or admin login"""
     mac_address = request.GET.get('mac', '')
     ip_address = request.META.get('REMOTE_ADDR', '')
+    
+    # Check if this looks like an admin access (no MAC address and from management IP)
+    # Also check for specific admin access parameter
+    admin_access = request.GET.get('admin') == '1'
+    
+    if admin_access or (not mac_address and not request.GET.get('ip')):
+        # Redirect to admin authentication
+        return redirect('/auth/login/')
     
     # Redirect directly to plans page with parameters
     return redirect(f'/plans/?mac={mac_address}&ip={ip_address}')

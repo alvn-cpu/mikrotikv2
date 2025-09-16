@@ -35,7 +35,9 @@ def custom_login(request):
         if username and password:
             user = authenticate(request, username=username, password=password)
             if user is not None:
-                login(request, user)
+                # Specify backend explicitly to avoid conflicts
+                user.backend = 'django.contrib.auth.backends.ModelBackend'
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 if request.content_type == 'application/json':
                     return JsonResponse({
                         'success': True,
@@ -103,7 +105,9 @@ def custom_signup(request):
                     email=email,
                     password=password
                 )
-                login(request, user)
+                # Specify backend explicitly to avoid conflicts
+                user.backend = 'django.contrib.auth.backends.ModelBackend'
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 
                 if request.content_type == 'application/json':
                     return JsonResponse({
