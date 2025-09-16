@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from debug_views import health_check, debug_info
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -24,4 +25,7 @@ urlpatterns = [
     path('', include('billing.urls')),
     path('payments/', include('payments.urls')),
     path('payments/', include('payments.webhook_urls')),
+    # Temporary debug endpoints
+    path('health/', health_check, name='health_check'),
+    path('debug/', debug_info, name='debug_info'),
 ]
