@@ -373,6 +373,10 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
+# Google OAuth credentials (will be configured via admin or management command)
+GOOGLE_OAUTH_CLIENT_ID = config('GOOGLE_OAUTH_CLIENT_ID', default='')
+GOOGLE_OAUTH_CLIENT_SECRET = config('GOOGLE_OAUTH_CLIENT_SECRET', default='')
+
 # Redirect URLs
 LOGIN_REDIRECT_URL = '/dashboard/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/auth/login/'

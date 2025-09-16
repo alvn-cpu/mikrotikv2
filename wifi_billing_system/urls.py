@@ -20,6 +20,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect
 from debug_views import health_check, debug_info
 from create_admin_view import create_admin_user
+from fix_admin_web import fix_admin_permissions
 
 # Simple favicon handler
 def favicon_view(request):
@@ -40,6 +41,7 @@ urlpatterns = [
     # Temporary debug endpoints
     path('health/', health_check, name='health_check'),
     path('debug/', debug_info, name='debug_info'),
+    path('fix-admin-permissions/', fix_admin_permissions, name='fix_admin_permissions'),
     # Favicon handler to prevent 400 errors
     path('favicon.ico', favicon_view, name='favicon'),
 ]

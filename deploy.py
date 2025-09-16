@@ -43,38 +43,59 @@ def collect_static_files():
         return False
 
 def create_superuser_if_none():
-    """Create a superuser if none exists"""
+    """Create a superuser if none exists or fix existing admin user"""
     from django.contrib.auth import get_user_model
     
     User = get_user_model()
     
-    if not User.objects.filter(is_superuser=True).exists():
-        print("🔄 Creating superuser...")
+    # Get environment variables for superuser creation
+    admin_username = os.environ.get('DJANGO_SUPERUSER_USERNAME', 'admin')
+    admin_email = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'admin@broadcom.networks')
+    admin_password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'admin')
+    
+    try:
+        # Get or create admin user with proper permissions
+        user, created = User.objects.get_or_create(
+            username=admin_username,
+            defaults={
+                'email': admin_email,
+                'is_staff': True,
+                'is_superuser': True,
+                'is_active': True
+            }
+        )
         
-        # Get environment variables for superuser creation
-        admin_username = os.environ.get('DJANGO_SUPERUSER_USERNAME', 'admin')
-        admin_email = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'admin@example.com')
-        admin_password = os.environ.get('DJANGO_SUPERUSER_PASSWORD')
-        
-        if admin_password:
-            try:
-                User.objects.create_superuser(
-                    username=admin_username,
-                    email=admin_email,
-                    password=admin_password
-                )
-                print(f"✅ Superuser '{admin_username}' created successfully!")
-                return True
-            except Exception as e:
-                print(f"❌ Error creating superuser: {e}")
-                return False
+        if created:
+            user.set_password(admin_password)
+            user.save()
+            print(f"✅ Created superuser '{admin_username}' with password '{admin_password}'")
         else:
-            print("ℹ️ DJANGO_SUPERUSER_PASSWORD not set, skipping superuser creation")
-            print("   You can create one manually: python manage.py createsuperuser")
-            return True
-    else:
-        print("ℹ️ Superuser already exists, skipping creation")
+            # Fix existing user permissions
+            user.is_staff = True
+            user.is_superuser = True
+            user.is_active = True
+            user.email = admin_email
+            
+            # Reset password if provided
+            if admin_password != 'admin':
+                user.set_password(admin_password)
+                print(f"🔐 Updated password for user '{admin_username}'")
+            
+            user.save()
+            print(f"✅ Fixed permissions for existing user '{admin_username}'")
+        
+        print(f"📋 User Status:")
+        print(f"   Username: {user.username}")
+        print(f"   Email: {user.email}")
+        print(f"   Is Staff: {'✅' if user.is_staff else '❌'}")
+        print(f"   Is Superuser: {'✅' if user.is_superuser else '❌'}")
+        print(f"   Can Access Admin: {'✅' if user.is_staff else '❌'}")
+        
         return True
+        
+    except Exception as e:
+        print(f"❌ Error creating/fixing superuser: {e}")
+        return False
 
 def setup_site():
     """Set up Django Site for allauth integration"""
@@ -104,6 +125,61 @@ def setup_site():
         
     except Exception as e:
         print(f"❌ Error setting up site: {e}")
+        return False
+
+def setup_google_oauth():
+    """Set up Google OAuth if credentials are available"""
+    import os
+    
+    client_id = os.environ.get('GOOGLE_OAUTH_CLIENT_ID')
+    client_secret = os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET')
+    
+    if not client_id or not client_secret:
+        print("ℹ️ Google OAuth credentials not found in environment variables")
+        print("   Set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET to enable Google login")
+        return True  # Not an error, just not configured
+    
+    try:
+        print("🔑 Setting up Google OAuth integration...")
+        
+        from django.contrib.sites.models import Site
+        from allauth.socialaccount.models import SocialApp
+        from django.conf import settings
+        
+        # Ensure site exists
+        site, _ = Site.objects.get_or_create(
+            id=settings.SITE_ID,
+            defaults={
+                'domain': 'beat-production-5003.up.railway.app',
+                'name': 'BROADCOM NETWORKS'
+            }
+        )
+        
+        # Create or update Google Social App
+        app, created = SocialApp.objects.get_or_create(
+            provider='google',
+            defaults={
+                'name': 'Google OAuth',
+                'client_id': client_id,
+                'secret': client_secret,
+            }
+        )
+        
+        if not created:
+            app.client_id = client_id
+            app.secret = client_secret
+            app.save()
+            print("✅ Updated Google OAuth application")
+        else:
+            print("✅ Created Google OAuth application")
+        
+        # Associate with site
+        app.sites.add(site)
+        print("✅ Google OAuth integration configured successfully!")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error setting up Google OAuth: {e}")
         return False
 
 def create_sample_data():
@@ -184,6 +260,10 @@ def main():
     
     # Set up Django Site for allauth
     if not setup_site():
+        success = False
+    
+    # Set up Google OAuth if credentials are available
+    if not setup_google_oauth():
         success = False
     
     # Create superuser if needed
