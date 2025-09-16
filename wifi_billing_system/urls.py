@@ -29,6 +29,7 @@ urlpatterns = [
     path('dashboard/', include('dashboard.urls')),
     path('mikrotik/', include('mikrotik_integration.urls')),
     path('auth/', include('authentication.urls')),
+    path('accounts/', include('allauth.urls')),  # Allauth URLs for OAuth
     path('', include('billing.urls')),
     path('payments/', include('payments.urls')),
     path('payments/', include('payments.webhook_urls')),
