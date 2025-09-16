@@ -45,3 +45,7 @@ sentry-sdk==2.21.0
 
 # Development tools (optional)
 django-extensions==3.2.3
+
+# Dashboard visualization dependencies
+plotly==5.22.0
+pandas==2.2.3

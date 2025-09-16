@@ -16,12 +16,23 @@ from .station_config_generator import (
     generate_station_readme
 )
 import json
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.utils import PlotlyJSONEncoder
-import pandas as pd
 import zipfile
 import io
+
+# Optional plotly imports for dashboard charts
+try:
+    import plotly.graph_objects as go
+    import plotly.express as px
+    from plotly.utils import PlotlyJSONEncoder
+    import pandas as pd
+    PLOTLY_AVAILABLE = True
+except ImportError:
+    PLOTLY_AVAILABLE = False
+    # Fallback for when plotly is not available
+    go = None
+    px = None
+    PlotlyJSONEncoder = None
+    pd = None
 
 
 @staff_member_required
@@ -149,7 +160,7 @@ def admin_dashboard(request):
 
 def create_revenue_chart(revenue_data):
     """Create revenue chart using Plotly"""
-    if not revenue_data:
+    if not PLOTLY_AVAILABLE or not revenue_data:
         return json.dumps({})
     
     dates = [item['day'] for item in revenue_data]
@@ -180,7 +191,7 @@ def create_revenue_chart(revenue_data):
 
 def create_user_chart(user_data):
     """Create user registration chart"""
-    if not user_data:
+    if not PLOTLY_AVAILABLE or not user_data:
         return json.dumps({})
     
     dates = [item['day'] for item in user_data]
@@ -209,7 +220,7 @@ def create_user_chart(user_data):
 
 def create_plan_chart(plan_data):
     """Create plan popularity chart"""
-    if not plan_data:
+    if not PLOTLY_AVAILABLE or not plan_data:
         return json.dumps({})
     
     plans = [item['plan__name'] for item in plan_data]
@@ -236,7 +247,7 @@ def create_plan_chart(plan_data):
 
 def create_session_chart(session_data):
     """Create session duration analysis chart"""
-    if not session_data:
+    if not PLOTLY_AVAILABLE or not session_data:
         return json.dumps({})
     
     # Convert to minutes and create ranges
