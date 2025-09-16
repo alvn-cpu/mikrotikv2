@@ -1,0 +1,2172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WiFi Billing System - Admin Dashboard</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    
+    <style>
+        :root {
+            /* Futuristic Color Palette */
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --cyber-gradient: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #00f2fe 100%);
+            --neon-gradient: linear-gradient(135deg, #ff006e 0%, #8338ec 50%, #3a86ff 100%);
+            --holographic: linear-gradient(45deg, #ff006e, #8338ec, #3a86ff, #06ffa5, #ffbe0b);
+            --glass-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            
+            /* Dark Theme Base */
+            --dark-bg: #0a0a0f;
+            --darker-bg: #050508;
+            --card-bg: rgba(255, 255, 255, 0.08);
+            --glass-bg: rgba(255, 255, 255, 0.12);
+            --sidebar-bg: linear-gradient(180deg, rgba(16, 16, 30, 0.95) 0%, rgba(8, 8, 16, 0.98) 100%);
+            
+            /* Text Colors */
+            --text-primary: #ffffff;
+            --text-secondary: #a8b3cf;
+            --text-muted: #6b7280;
+            --text-accent: #00f2fe;
+            
+            /* Border & Shadow */
+            --border-glass: rgba(255, 255, 255, 0.18);
+            --border-neon: rgba(0, 242, 254, 0.3);
+            --shadow-neon: 0 0 30px rgba(0, 242, 254, 0.3);
+            --shadow-glass: 0 8px 32px rgba(31, 38, 135, 0.37);
+            --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            
+            /* Animation Variables */
+            --transition-smooth: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            --transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--dark-bg);
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(0, 242, 254, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(131, 56, 236, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 10%, rgba(255, 0, 110, 0.1) 0%, transparent 50%),
+                linear-gradient(135deg, var(--dark-bg) 0%, var(--darker-bg) 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Animated Background Elements */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(600px circle at 0% 0%, rgba(0, 242, 254, 0.05) 0%, transparent 40%),
+                radial-gradient(800px circle at 100% 100%, rgba(131, 56, 236, 0.05) 0%, transparent 40%);
+            animation: backgroundShift 20s ease-in-out infinite alternate;
+            z-index: -1;
+        }
+        
+        @keyframes backgroundShift {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-50px, -30px) scale(1.1); }
+        }
+
+        /* Advanced Floating Elements */
+        .floating-elements {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .floating-element {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(1px);
+            animation: float 15s ease-in-out infinite;
+        }
+        
+        .floating-element:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, rgba(0, 242, 254, 0.1) 0%, transparent 70%);
+            top: 10%;
+            left: 5%;
+            animation-delay: 0s;
+        }
+        
+        .floating-element:nth-child(2) {
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(131, 56, 236, 0.08) 0%, transparent 70%);
+            top: 20%;
+            right: 10%;
+            animation-delay: -5s;
+        }
+        
+        .floating-element:nth-child(3) {
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, rgba(255, 0, 110, 0.12) 0%, transparent 70%);
+            bottom: 15%;
+            left: 15%;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { 
+                transform: translate(0, 0) rotate(0deg) scale(1); 
+                opacity: 0.4;
+            }
+            33% { 
+                transform: translate(30px, -30px) rotate(120deg) scale(1.1); 
+                opacity: 0.8;
+            }
+            66% { 
+                transform: translate(-20px, 20px) rotate(240deg) scale(0.9); 
+                opacity: 0.6;
+            }
+        }
+
+        /* Futuristic Sidebar */
+        .sidebar {
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(25px) saturate(1.8);
+            border-right: 1px solid var(--border-glass);
+            box-shadow: var(--shadow-glass), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            min-height: 100vh;
+            position: sticky;
+            top: 0;
+            transition: var(--transition-smooth);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--cyber-gradient);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: scaleX(1); }
+            50% { opacity: 1; transform: scaleX(1.05); }
+        }
+
+        .sidebar-header {
+            padding: 2rem 1.5rem;
+            border-bottom: 1px solid var(--border-glass);
+            text-align: center;
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .sidebar-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 1px;
+            background: var(--cyber-gradient);
+            box-shadow: 0 0 10px var(--text-accent);
+        }
+
+        .sidebar-header .logo {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            transition: var(--transition-smooth);
+            position: relative;
+        }
+        
+        .sidebar-header .logo:hover {
+            transform: scale(1.05);
+            text-shadow: 0 0 20px var(--text-accent);
+        }
+
+        .sidebar-header .logo i {
+            font-size: 2rem;
+            background: var(--cyber-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.5));
+            animation: iconGlow 3s ease-in-out infinite;
+        }
+        
+        @keyframes iconGlow {
+            0%, 100% { filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.5)); }
+            50% { filter: drop-shadow(0 0 20px rgba(0, 242, 254, 0.8)); }
+        }
+
+        .nav-section {
+            padding: 1.5rem 1rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+            padding: 0 0.75rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 12px;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            transition: var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid transparent;
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, var(--text-accent), transparent);
+            opacity: 0.1;
+            transition: left 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -5px;
+            width: 3px;
+            height: 0;
+            background: var(--cyber-gradient);
+            border-radius: 3px;
+            transition: var(--transition-smooth);
+            transform: translateY(-50%);
+        }
+
+        .nav-link:hover::before {
+            left: 100%;
+        }
+        
+        .nav-link:hover::after {
+            height: 60%;
+            box-shadow: var(--shadow-neon);
+        }
+
+        .nav-link:hover {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            transform: translateX(8px);
+            border-color: var(--border-neon);
+            box-shadow: var(--shadow-glass);
+            backdrop-filter: blur(20px);
+        }
+
+        .nav-link.active {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            border-color: var(--border-neon);
+            box-shadow: var(--shadow-neon), var(--shadow-glass);
+            transform: translateX(8px);
+        }
+        
+        .nav-link.active::after {
+            height: 80%;
+            background: var(--neon-gradient);
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.8);
+        }
+
+        .nav-link i {
+            font-size: 1.125rem;
+            width: 20px;
+        }
+
+        /* Futuristic Main Content */
+        .main-content {
+            background: transparent;
+            min-height: 100vh;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px) saturate(1.8);
+            border-radius: 24px;
+            padding: 2rem 2.5rem;
+            box-shadow: var(--shadow-glass), 0 0 40px rgba(0, 242, 254, 0.1);
+            border: 1px solid var(--border-glass);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .content-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--cyber-gradient);
+            opacity: 0.6;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--cyber-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0;
+            position: relative;
+            text-shadow: 0 0 30px rgba(0, 242, 254, 0.3);
+        }
+
+        /* Futuristic Cards & Dashboard Elements */
+        .dashboard-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px) saturate(1.8);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-glass);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition-smooth);
+        }
+        
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--holographic);
+            background-size: 200% 100%;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-glass), 0 20px 40px rgba(0, 242, 254, 0.15);
+            border-color: var(--border-neon);
+        }
+        
+        @keyframes shimmer {
+            0%, 100% { background-position: 200% center; }
+            50% { background-position: -200% center; }
+        }
+        
+        .stat-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition-smooth);
+        }
+        
+        .stat-card:hover {
+            transform: scale(1.05) translateY(-5px);
+            box-shadow: var(--shadow-neon);
+            border-color: var(--text-accent);
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--neon-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            line-height: 1;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        .breadcrumb {
+            background: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.875rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-secondary);
+        }
+
+        .breadcrumb-item.active {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Stats Cards */
+        .stats-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        .stats-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .stats-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stats-number {
+            font-size: 2.25rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stats-change {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.75rem;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 2rem;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            border-bottom: 2px solid var(--border-color);
+            font-weight: 600;
+            color: var(--text-primary);
+            padding: 1rem 1.5rem;
+        }
+
+        .table tbody td {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        /* Badges */
+        .badge {
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+        }
+
+        .badge-success {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .badge-warning {
+            background: var(--warning-gradient);
+            color: white;
+        }
+
+        .badge-danger {
+            background: var(--secondary-gradient);
+            color: white;
+        }
+
+        .badge-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        /* Buttons */
+        .btn {
+            border-radius: 12px;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -280px;
+                z-index: 1000;
+                transition: left 0.3s ease;
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+        }
+
+        /* Loading Animation */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Futuristic Floating Elements -->
+    <div class="floating-elements">
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+    </div>
+    
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <!-- Modern Sidebar -->
+            <div class="col-lg-2 col-md-3 sidebar">
+                <div class="sidebar-header">
+                    <a href="#" class="logo">
+                        <i class="fas fa-wifi"></i>
+                        <span>WiFi Pro</span>
+                    </a>
+                </div>
+                
+                <!-- Main Navigation -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Dashboard</div>
+                    <a href="#overview" class="nav-link active" onclick="showSection('overview')">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Overview</span>
+                    </a>
+                    <a href="#analytics" class="nav-link" onclick="showSection('analytics')">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Analytics</span>
+                    </a>
+                </div>
+                
+                <!-- Management Section -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Management</div>
+                    <a href="#users" class="nav-link" onclick="showSection('users')">
+                        <i class="fas fa-users"></i>
+                        <span>Users</span>
+                    </a>
+                    <a href="#plans" class="nav-link" onclick="showSection('plans')">
+                        <i class="fas fa-layer-group"></i>
+                        <span>Plans</span>
+                    </a>
+                    <a href="#transactions" class="nav-link" onclick="showSection('transactions')">
+                        <i class="fas fa-credit-card"></i>
+                        <span>Transactions</span>
+                    </a>
+                    <a href="#sessions" class="nav-link" onclick="showSection('sessions')">
+                        <i class="fas fa-wifi"></i>
+                        <span>Sessions</span>
+                    </a>
+                </div>
+                
+                <!-- Network Section -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Network</div>
+                    <a href="#stations" class="nav-link" onclick="showSection('stations')">
+                        <i class="fas fa-broadcast-tower"></i>
+                        <span>Stations</span>
+                    </a>
+                    <a href="#radius" class="nav-link" onclick="showSection('radius')">
+                        <i class="fas fa-server"></i>
+                        <span>RADIUS</span>
+                    </a>
+                    <a href="#monitoring" class="nav-link" onclick="showSection('monitoring')">
+                        <i class="fas fa-desktop"></i>
+                        <span>Monitoring</span>
+                    </a>
+                </div>
+                
+                <!-- System Section -->
+                <div class="nav-section">
+                    <div class="nav-section-title">System</div>
+                    <a href="#settings" class="nav-link" onclick="showSection('settings')">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                    <a href="#reports" class="nav-link" onclick="showSection('reports')">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Reports</span>
+                    </a>
+                    <a href="#" class="nav-link" onclick="location.reload()">
+                        <i class="fas fa-sync"></i>
+                        <span>Refresh</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Main Content Area -->
+            <div class="col-lg-10 col-md-9 main-content">
+                
+                <!-- Overview Section -->
+                <div id="overview-section" class="content-section active">
+                    <div class="content-header">
+                        <div>
+                            <h1 class="page-title">Dashboard Overview</h1>
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+                                    <li class="breadcrumb-item active">Overview</li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                    
+                    <!-- Key Metrics Cards -->
+                    <div class="row mb-4">
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="stats-card">
+                                <div class="stats-icon" style="background: var(--primary-gradient);">
+                                    <i class="fas fa-users" style="color: white;"></i>
+                                </div>
+                                <div class="stats-number" style="color: #667eea;">{{ stats.total_users }}</div>
+                                <div class="stats-label">Total Users</div>
+                                <div class="stats-change" style="color: #10b981;">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>+{{ today_stats.new_users }} today</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="stats-card">
+                                <div class="stats-icon" style="background: var(--success-gradient);">
+                                    <i class="fas fa-wifi" style="color: white;"></i>
+                                </div>
+                                <div class="stats-number" style="color: #00f2fe;">{{ stats.active_users }}</div>
+                                <div class="stats-label">Active Users</div>
+                                <div class="stats-change" style="color: #3b82f6;">
+                                    <i class="fas fa-signal"></i>
+                                    <span>{{ stats.active_sessions }} sessions</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="stats-card">
+                                <div class="stats-icon" style="background: var(--warning-gradient);">
+                                    <i class="fas fa-money-bill-wave" style="color: white;"></i>
+                                </div>
+                                <div class="stats-number" style="color: #38f9d7;">KES {{ stats.total_revenue|floatformat:0 }}</div>
+                                <div class="stats-label">Total Revenue</div>
+                                <div class="stats-change" style="color: #10b981;">
+                                    <i class="fas fa-plus"></i>
+                                    <span>+{{ today_stats.revenue|floatformat:0 }} today</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="stats-card">
+                                <div class="stats-icon" style="background: var(--secondary-gradient);">
+                                    <i class="fas fa-credit-card" style="color: white;"></i>
+                                </div>
+                                <div class="stats-number" style="color: #f5576c;">{{ stats.successful_payments }}</div>
+                                <div class="stats-label">Successful Payments</div>
+                                <div class="stats-change" style="color: #3b82f6;">
+                                    <i class="fas fa-chart-line"></i>
+                                    <span>{{ today_stats.transactions }} today</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="chart-container">
+                                <div class="chart-header">
+                                    <h3 class="chart-title">Quick Actions</h3>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-3 col-md-6 mb-3">
+                                        <button class="btn btn-primary w-100" onclick="showSection('plans')">
+                                            <i class="fas fa-plus me-2"></i>Add Plan
+                                        </button>
+                                    </div>
+                                    <div class="col-lg-3 col-md-6 mb-3">
+                                        <button class="btn btn-success w-100" onclick="showSection('users')">
+                                            <i class="fas fa-users me-2"></i>Manage Users
+                                        </button>
+                                    </div>
+                                    <div class="col-lg-3 col-md-6 mb-3">
+                                        <button class="btn btn-info w-100" onclick="showSection('transactions')">
+                                            <i class="fas fa-chart-bar me-2"></i>View Reports
+                                        </button>
+                                    </div>
+                                    <div class="col-lg-3 col-md-6 mb-3">
+                                        <button class="btn btn-warning w-100" onclick="showSection('stations')">
+                                            <i class="fas fa-cog me-2"></i>Configure
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Analytics Section -->
+                <div id="analytics-section" class="content-section">
+                    <div class="content-header">
+                        <div>
+                            <h1 class="page-title">Analytics & Charts</h1>
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+                                    <li class="breadcrumb-item active">Analytics</li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-lg-8 mb-4">
+                            <div class="chart-container">
+                                <div class="chart-header">
+                                    <h3 class="chart-title">Revenue Trend (Last 30 Days)</h3>
+                                </div>
+                                <div id="revenueChart" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4 mb-4">
+                            <div class="chart-container">
+                                <div class="chart-header">
+                                    <h3 class="chart-title">Plan Popularity</h3>
+                                </div>
+                                <div id="planChart" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-lg-6 mb-4">
+                            <div class="chart-container">
+                                <div class="chart-header">
+                                    <h3 class="chart-title">User Registrations</h3>
+                                </div>
+                                <div id="userChart" style="height: 350px;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-4">
+                            <div class="chart-container">
+                                <div class="chart-header">
+                                    <h3 class="chart-title">Session Duration Analysis</h3>
+                                </div>
+                                <div id="sessionChart" style="height: 350px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Users Management Section -->
+                <div id="users-section" class="content-section">
+                    <div class="content-header">
+                        <div>
+                            <h1 class="page-title">Users Management</h1>
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+                                    <li class="breadcrumb-item active">Users</li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3 class="chart-title">All WiFi Users</h3>
+                            <button class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Add User
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Phone Number</th>
+                                        <th>Status</th>
+                                        <th>Current Plan</th>
+                                        <th>Data Used</th>
+                                        <th>Expires</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in recent_users %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ user.phone_number }}</strong><br>
+                                            <small class="text-muted">{{ user.mac_address|default:'No MAC' }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-{% if user.status == 'active' %}success{% elif user.status == 'pending' %}warning{% else %}danger{% endif %}">
+                                                {{ user.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ user.current_plan.name|default:'No Plan' }}</td>
+                                        <td>{{ user.data_used_mb|default:'0' }} MB</td>
+                                        <td>{{ user.plan_expires_at|timesince|default:'Never' }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1" onclick="editUser('{{ user.id }}')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteUser('{{ user.id }}', '{{ user.phone_number }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Transactions Section -->
+                <div id="transactions-section" class="content-section">
+                    <div class="content-header">
+                        <div>
+                            <h1 class="page-title">Payment Transactions</h1>
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+                                    <li class="breadcrumb-item active">Transactions</li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3 class="chart-title">Recent Transactions</h3>
+                            <button class="btn btn-success" onclick="exportTransactions()">
+                                <i class="fas fa-download me-2"></i>Export CSV
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Transaction ID</th>
+                                        <th>User</th>
+                                        <th>Plan</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for txn in recent_transactions %}
+                                    <tr>
+                                        <td>
+                                            <code>{{ txn.transaction_id|slice:'-12:' }}</code>
+                                        </td>
+                                        <td>{{ txn.phone_number|default:'Unknown' }}</td>
+                                        <td>{{ txn.plan.name|default:'No Plan' }}</td>
+                                        <td><strong>KES {{ txn.amount }}</strong></td>
+                                        <td>
+                                            <span class="badge badge-{% if txn.status == 'completed' %}success{% elif txn.status == 'pending' %}warning{% else %}danger{% endif %}">
+                                                {{ txn.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ txn.created_at|date:'M d, Y H:i' }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Plans Management Section -->
+                <div id="plans-section" class="content-section" style="display: none;">
+                    <h1 class="page-title">Plans Management</h1>
+                    
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <button class="btn btn-primary mb-3" onclick="showAddPlanModal()">
+                                <i class="fas fa-plus me-2"></i>Add New Plan
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="table-responsive">
+                                <h5 class="mb-3">Current WiFi Plans</h5>
+                                <table class="table table-hover" id="plansTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Price</th>
+                                            <th>Duration</th>
+                                            <th>Speed</th>
+                                            <th>Status</th>
+                                            <th>Created</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for plan in wifi_plans %}
+                                        <tr>
+                                            <td><strong>{{ plan.name }}</strong></td>
+                                            <td>KES {{ plan.price }}</td>
+                                            <td>{{ plan.duration_display }}</td>
+                                            <td>{{ plan.download_speed_kbps }}↓/{{ plan.upload_speed_kbps }}↑ Kbps</td>
+                                            <td>
+                                                <span class="badge {% if plan.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                                    {% if plan.is_active %}Active{% else %}Inactive{% endif %}
+                                                </span>
+                                            </td>
+                                            <td>{{ plan.created_at|date:"M d, Y" }}</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary me-1" onclick="editPlan('{{ plan.id }}')">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" onclick="deletePlan('{{ plan.id }}', '{{ plan.name }}')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stations Management Section -->
+                <div id="stations-section" class="content-section" style="display: none;">
+                    <h1 class="page-title">MikroTik Stations</h1>
+                    
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <button class="btn btn-primary mb-3" onclick="showAddStationModal()">
+                                <i class="fas fa-plus me-2"></i>Add New Station
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="table-responsive">
+                                <h5 class="mb-3">Router Configurations</h5>
+                                <table class="table table-hover" id="stationsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Station Name</th>
+                                            <th>IP Address</th>
+                                            <th>API Port</th>
+                                            <th>Status</th>
+                                            <th>Last Connected</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for router in router_configs %}
+                                        <tr>
+                                            <td><strong>{{ router.name }}</strong></td>
+                                            <td>{{ router.host }}</td>
+                                            <td>{{ router.api_port }}</td>
+                                            <td>
+                                                <span class="badge {% if router.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                                    {% if router.is_active %}Active{% else %}Inactive{% endif %}
+                                                </span>
+                                                <span class="badge bg-info">{{ router.connection_status|title }}</span>
+                                            </td>
+                                            <td>{{ router.last_connected|timesince|default:"Never" }}</td>
+                                            <td>
+                                                <!-- Action Buttons -->
+                                                <div class="btn-group" role="group">
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="editStation('{{ router.id }}')" title="Edit Station">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    
+                                                    <!-- Download Dropdown -->
+                                                    <div class="btn-group" role="group">
+                                                        <button type="button" class="btn btn-sm btn-outline-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Download Configuration">
+                                                            <i class="fas fa-download"></i>
+                                                        </button>
+                                                        <ul class="dropdown-menu">
+                                                            <li><h6 class="dropdown-header"><i class="fas fa-download me-1"></i>Download Options</h6></li>
+                                                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="downloadCompleteConfig('{{ router.id }}')">
+                                                                <i class="fas fa-archive me-2 text-success"></i>Complete Package (ZIP)
+                                                                <small class="d-block text-muted">Config + Login Page + Instructions</small>
+                                                            </a></li>
+                                                            <li><hr class="dropdown-divider"></li>
+                                                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="downloadConfigFile('{{ router.id }}')">
+                                                                <i class="fas fa-file-code me-2 text-primary"></i>RouterOS Config (.rsc)
+                                                                <small class="d-block text-muted">MikroTik configuration script only</small>
+                                                            </a></li>
+                                                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="downloadLoginPage('{{ router.id }}')">
+                                                                <i class="fas fa-file-code me-2 text-info"></i>Login Page (.html)
+                                                                <small class="d-block text-muted">Custom captive portal page only</small>
+                                                            </a></li>
+                                                        </ul>
+                                                    </div>
+                                                    
+                                                    <button class="btn btn-sm btn-outline-warning" onclick="testConnection('{{ router.id }}')" title="Test Connection">
+                                                        <i class="fas fa-plug"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteStation('{{ router.id }}', '{{ router.name }}')" title="Delete Station">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sessions Management Section -->
+                <div id="sessions-section" class="content-section">
+                    <div class="content-header">
+                        <div>
+                            <h1 class="page-title">Active Sessions</h1>
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+                                    <li class="breadcrumb-item active">Sessions</li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3 class="chart-title">Active User Sessions</h3>
+                            <button class="btn btn-info" onclick="refreshSessions()">
+                                <i class="fas fa-sync me-2"></i>Refresh
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table" id="sessionsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>IP Address</th>
+                                        <th>Started</th>
+                                        <th>Duration</th>
+                                        <th>Data Usage</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sessionsTableBody">
+                                    <tr>
+                                        <td colspan="6" class="text-center">
+                                            <i class="fas fa-spinner fa-spin"></i> Loading sessions...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- RADIUS Section -->
+                <div id="radius-section" class="content-section">
+                    <div class="content-header">
+                        <div>
+                            <h1 class="page-title">RADIUS Server Status</h1>
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+                                    <li class="breadcrumb-item active">RADIUS</li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                    
+                    {% if nas_clients %}
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3 class="chart-title">RADIUS Clients</h3>
+                            <button class="btn btn-success">
+                                <i class="fas fa-plus me-2"></i>Add Client
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Server Name</th>
+                                        <th>IP Address</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th>Last Updated</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for nas in nas_clients %}
+                                    <tr>
+                                        <td>
+                                            <i class="fas fa-server me-2"></i>
+                                            <strong>{{ nas.shortname }}</strong>
+                                        </td>
+                                        <td>{{ nas.nasname }}</td>
+                                        <td>{{ nas.type|title }}</td>
+                                        <td>
+                                            <span class="badge badge-{% if nas.is_active %}success{% else %}danger{% endif %}">
+                                                {% if nas.is_active %}Active{% else %}Inactive{% endif %}
+                                            </span>
+                                        </td>
+                                        <td>{{ nas.updated_at|timesince }} ago</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-warning">
+                                                <i class="fas fa-plug"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="chart-container text-center">
+                        <h4>No RADIUS Clients Found</h4>
+                        <p class="text-muted">Configure your MikroTik routers to use this server as RADIUS authentication.</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Network Monitoring Section -->
+                <div id="monitoring-section" class="content-section">
+                    <div class="content-header">
+                        <div>
+                            <h1 class="page-title">Network Monitoring</h1>
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+                                    <li class="breadcrumb-item active">Monitoring</li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-lg-6 mb-4">
+                            <div class="stats-card">
+                                <div class="stats-icon" style="background: var(--success-gradient);">
+                                    <i class="fas fa-network-wired" style="color: white;"></i>
+                                </div>
+                                <div class="stats-number" style="color: #00f2fe;">{{ stats.active_sessions }}</div>
+                                <div class="stats-label">Active Connections</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 mb-4">
+                            <div class="stats-card">
+                                <div class="stats-icon" style="background: var(--warning-gradient);">
+                                    <i class="fas fa-hdd" style="color: white;"></i>
+                                </div>
+                                <div class="stats-number" style="color: #38f9d7;">0 MB/s</div>
+                                <div class="stats-label">Network Throughput</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Real-time Network Activity</h3>
+                        </div>
+                        <p class="text-muted text-center py-5">
+                            <i class="fas fa-chart-line fa-3x mb-3"></i><br>
+                            Network monitoring dashboard will be implemented here.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Settings Section -->
+                <div id="settings-section" class="content-section">
+                    <div class="content-header">
+                        <div>
+                            <h1 class="page-title">System Settings</h1>
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+                                    <li class="breadcrumb-item active">Settings</li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-lg-6 mb-4">
+                            <div class="chart-container">
+                                <div class="chart-header">
+                                    <h3 class="chart-title">General Settings</h3>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">System Name</label>
+                                    <input type="text" class="form-control" value="WiFi Billing System">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Default Plan Duration</label>
+                                    <select class="form-control">
+                                        <option>1 Hour</option>
+                                        <option>24 Hours</option>
+                                        <option>7 Days</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Save Changes
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-4">
+                            <div class="chart-container">
+                                <div class="chart-header">
+                                    <h3 class="chart-title">Payment Gateway</h3>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">KCB Buni API Key</label>
+                                    <input type="password" class="form-control" placeholder="Enter API Key">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">RADIUS Secret</label>
+                                    <input type="password" class="form-control" placeholder="Enter RADIUS Secret">
+                                </div>
+                                <button class="btn btn-success">
+                                    <i class="fas fa-check me-2"></i>Update Configuration
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Reports Section -->
+                <div id="reports-section" class="content-section">
+                    <div class="content-header">
+                        <div>
+                            <h1 class="page-title">Reports & Analytics</h1>
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+                                    <li class="breadcrumb-item active">Reports</li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <button class="btn btn-primary w-100" onclick="exportTransactions()">
+                                <i class="fas fa-file-csv me-2"></i>Export Transactions
+                            </button>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <button class="btn btn-success w-100">
+                                <i class="fas fa-chart-pie me-2"></i>Revenue Report
+                            </button>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <button class="btn btn-info w-100">
+                                <i class="fas fa-users me-2"></i>User Activity
+                            </button>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <button class="btn btn-warning w-100">
+                                <i class="fas fa-wifi me-2"></i>Usage Statistics
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Available Reports</h3>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-money-bill-wave fa-2x text-success mb-3"></i>
+                                        <h5>Daily Revenue</h5>
+                                        <p class="text-muted">Generate daily revenue reports</p>
+                                        <button class="btn btn-outline-success btn-sm">Generate</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-user-friends fa-2x text-primary mb-3"></i>
+                                        <h5>User Statistics</h5>
+                                        <p class="text-muted">Analyze user behavior patterns</p>
+                                        <button class="btn btn-outline-primary btn-sm">Generate</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-chart-bar fa-2x text-info mb-3"></i>
+                                        <h5>Usage Analytics</h5>
+                                        <p class="text-muted">Track data consumption trends</p>
+                                        <button class="btn btn-outline-info btn-sm">Generate</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Plan Management Modal -->
+    <div class="modal fade" id="planModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="planModalTitle">Add New Plan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="planForm">
+                        <div class="mb-3">
+                            <label for="planName" class="form-label">Plan Name *</label>
+                            <input type="text" class="form-control" id="planName" name="name" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="planPrice" class="form-label">Price (KES) *</label>
+                                <input type="number" step="0.01" class="form-control" id="planPrice" name="price" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="planDurationUnit" class="form-label">Duration Unit *</label>
+                                <select class="form-control" id="planDurationUnit" name="duration_unit" required>
+                                    <option value="minutes">Minutes</option>
+                                    <option value="hours">Hours</option>
+                                    <option value="days">Days</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="planDurationValue" class="form-label">Duration Value *</label>
+                                <input type="number" class="form-control" id="planDurationValue" name="duration_value" required>
+                            </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="planDownloadSpeed" class="form-label">Download Speed (Kbps)</label>
+                                <input type="number" class="form-control" id="planDownloadSpeed" name="download_speed" value="2048">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="planUploadSpeed" class="form-label">Upload Speed (Kbps)</label>
+                                <input type="number" class="form-control" id="planUploadSpeed" name="upload_speed" value="1024">
+                            </div>
+                        </div>
+                            <label for="planDataLimit" class="form-label">Data Limit (MB)</label>
+                            <input type="number" class="form-control" id="planDataLimit" name="data_limit" placeholder="Leave empty for unlimited">
+                        </div>
+                        <div class="mb-3">
+                            <label for="planDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="planDescription" name="description" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="planIsActive" name="is_active" checked>
+                            <label class="form-check-label" for="planIsActive">Active</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="savePlan()">Save Plan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Station Management Modal -->
+    <div class="modal fade" id="stationModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="stationModalTitle">Add New Station</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="stationForm">
+                        <!-- Basic Station Configuration -->
+                        <h6 class="text-primary mb-3"><i class="fas fa-server me-2"></i>Station Configuration</h6>
+                        <div class="mb-3">
+                            <label for="stationName" class="form-label">Station Name *</label>
+                            <input type="text" class="form-control" id="stationName" name="name" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="stationHost" class="form-label">IP Address *</label>
+                                <input type="text" class="form-control" id="stationHost" name="host" required placeholder="192.168.1.1">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="stationApiPort" class="form-label">API Port</label>
+                                <input type="number" class="form-control" id="stationApiPort" name="api_port" value="8728">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="stationUsername" class="form-label">API Username *</label>
+                                <input type="text" class="form-control" id="stationUsername" name="username" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="stationPassword" class="form-label">API Password *</label>
+                                <input type="password" class="form-control" id="stationPassword" name="password">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="stationInterface" class="form-label">Hotspot Interface</label>
+                                <input type="text" class="form-control" id="stationInterface" name="hotspot_interface" value="wlan1">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="stationAddressPool" class="form-label">Address Pool</label>
+                                <input type="text" class="form-control" id="stationAddressPool" name="address_pool" value="dhcp_pool1">
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        <!-- KCB Payment Configuration -->
+                        <h6 class="text-success mb-3"><i class="fas fa-money-bill-wave me-2"></i>KCB Buni Payment Setup</h6>
+                        <div class="mb-3">
+                            <label for="businessName" class="form-label">Business Name</label>
+                            <input type="text" class="form-control" id="businessName" name="business_name" placeholder="e.g., Station WiFi Services">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="paymentMethod" class="form-label">Payment Method</label>
+                                <select class="form-control" id="paymentMethod" name="payment_method" onchange="togglePaymentFields()">
+                                    <option value="paybill">Paybill</option>
+                                    <option value="till">Buy Goods Till</option>
+                                    <option value="account">Bank Account</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check mt-4">
+                                    <input type="checkbox" class="form-check-input" id="enablePayments" name="enable_payments" checked>
+                                    <label class="form-check-label" for="enablePayments">Enable Payments</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row" id="paybillFields">
+                            <div class="col-md-6 mb-3">
+                                <label for="paybillNumber" class="form-label">Paybill Number</label>
+                                <input type="text" class="form-control" id="paybillNumber" name="paybill_number" placeholder="e.g., 123456">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="accountNumber" class="form-label">Account Number</label>
+                                <input type="text" class="form-control" id="accountNumber" name="account_number" placeholder="Account reference">
+                            </div>
+                        </div>
+                        <div class="row" id="tillFields" style="display: none;">
+                            <div class="col-md-6 mb-3">
+                                <label for="tillNumber" class="form-label">Till Number</label>
+                                <input type="text" class="form-control" id="tillNumber" name="till_number" placeholder="e.g., 123456">
+                            </div>
+                        </div>
+                        
+                        <h6 class="text-warning mb-3"><i class="fas fa-account-card me-2"></i>KCB Account Details</h6>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <small>API credentials are configured globally. Here you specify your station's KCB account details.</small>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="kcbAccountType" class="form-label">KCB Account Type</label>
+                                <select class="form-control" id="kcbAccountType" name="kcb_account_type">
+                                    <option value="paybill">Paybill Number</option>
+                                    <option value="till">Till Number</option>
+                                    <option value="bank">Bank Account</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="kcbAccountNumber" class="form-label">Account/Till/Paybill Number</label>
+                                <input type="text" class="form-control" id="kcbAccountNumber" name="kcb_account_number" placeholder="e.g., 123456">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="accountName" class="form-label">Account Name/Reference (Optional)</label>
+                            <input type="text" class="form-control" id="accountName" name="account_name" placeholder="Account holder name or reference">
+                            <small class="text-muted">This will be used as account reference for paybill transactions</small>
+                        </div>
+                        
+                        <div class="mb-3" id="testCredentialsSection" style="display: none;">
+                            <button type="button" class="btn btn-outline-info" onclick="testPaymentCredentials(currentStationId)">
+                                <i class="fas fa-test-tube me-2"></i>Test Payment Configuration
+                            </button>
+                            <small class="text-muted d-block mt-1">Save the station first, then test the payment configuration</small>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="stationIsActive" name="is_active" checked>
+                            <label class="form-check-label" for="stationIsActive">Station Active</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveStation()">Save Station</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Revenue Chart
+            var revenueData = {{ revenue_chart|safe }};
+            if (revenueData.data) {
+                Plotly.newPlot('revenueChart', revenueData.data, revenueData.layout, {responsive: true});
+            }
+            
+            // Plan Chart
+            var planData = {{ plan_chart|safe }};
+            if (planData.data) {
+                Plotly.newPlot('planChart', planData.data, planData.layout, {responsive: true});
+            }
+            
+            // User Chart
+            var userData = {{ user_chart|safe }};
+            if (userData.data) {
+                Plotly.newPlot('userChart', userData.data, userData.layout, {responsive: true});
+            }
+            
+            // Session Chart
+            var sessionData = {{ session_chart|safe }};
+            if (sessionData.data) {
+                Plotly.newPlot('sessionChart', sessionData.data, sessionData.layout, {responsive: true});
+            }
+        });
+        
+        // Auto-refresh every 5 minutes
+        setTimeout(function() {
+            location.reload();
+        }, 300000);
+        
+        // Section navigation
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(function(section) {
+                section.style.display = 'none';
+            });
+            
+            // Show selected section
+            document.getElementById(sectionName + '-section').style.display = 'block';
+            
+            // Update navigation
+            document.querySelectorAll('.nav-link').forEach(function(link) {
+                link.classList.remove('active');
+            });
+            document.querySelector(`[href="#${sectionName}"]`).classList.add('active');
+        }
+        
+        // Global variables
+        let currentPlanId = null;
+        let currentStationId = null;
+        
+        // Plans management functions
+        function showAddPlanModal() {
+            currentPlanId = null;
+            document.getElementById('planModalTitle').textContent = 'Add New Plan';
+            document.getElementById('planForm').reset();
+            document.getElementById('planIsActive').checked = true;
+            new bootstrap.Modal(document.getElementById('planModal')).show();
+        }
+        
+        function editPlan(planId) {
+            currentPlanId = planId;
+            document.getElementById('planModalTitle').textContent = 'Edit Plan';
+            
+            // Fetch plan data
+            fetch(`/dashboard/plans/${planId}/get/`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('planName').value = data.name;
+                    document.getElementById('planPrice').value = data.price;
+                    document.getElementById('planDurationValue').value = data.duration_value;
+                    document.getElementById('planDurationUnit').value = data.duration_unit;
+                    document.getElementById('planDownloadSpeed').value = data.download_speed;
+                    document.getElementById('planUploadSpeed').value = data.upload_speed;
+                    document.getElementById('planDataLimit').value = data.data_limit;
+                    document.getElementById('planDescription').value = data.description;
+                    document.getElementById('planIsActive').checked = data.is_active;
+                    
+                    new bootstrap.Modal(document.getElementById('planModal')).show();
+                })
+                .catch(error => {
+                    alert('Error loading plan data: ' + error);
+                });
+        }
+        
+        function savePlan() {
+            const formData = new FormData(document.getElementById('planForm'));
+            formData.append('is_active', document.getElementById('planIsActive').checked ? 'true' : 'false');
+            
+            const url = currentPlanId ? 
+                `/dashboard/plans/${currentPlanId}/update/` : 
+                '/dashboard/plans/create/';
+            
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    bootstrap.Modal.getInstance(document.getElementById('planModal')).hide();
+                    location.reload(); // Refresh to show changes
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error saving plan: ' + error);
+            });
+        }
+        
+        function deletePlan(planId, planName) {
+            if (confirm(`Are you sure you want to delete the plan "${planName}"?`)) {
+                fetch(`/dashboard/plans/${planId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Error deleting plan: ' + error);
+                });
+            }
+        }
+        
+        // Stations management functions
+        function showAddStationModal() {
+            currentStationId = null;
+            document.getElementById('stationModalTitle').textContent = 'Add New Station';
+            document.getElementById('stationForm').reset();
+            document.getElementById('stationApiPort').value = '8728';
+            document.getElementById('stationInterface').value = 'wlan1';
+            document.getElementById('stationAddressPool').value = 'dhcp_pool1';
+            document.getElementById('stationIsActive').checked = true;
+            document.getElementById('stationPassword').required = true;
+            
+            // Hide test credentials button for new stations
+            document.getElementById('testCredentialsSection').style.display = 'none';
+            
+            new bootstrap.Modal(document.getElementById('stationModal')).show();
+        }
+        
+        function editStation(stationId) {
+            currentStationId = stationId;
+            document.getElementById('stationModalTitle').textContent = 'Edit Station';
+            document.getElementById('stationPassword').required = false;
+            
+            // Fetch station data
+            fetch(`/dashboard/stations/${stationId}/get/`)
+                .then(response => response.json())
+                .then(data => {
+                    // Basic station fields
+                    document.getElementById('stationName').value = data.name;
+                    document.getElementById('stationHost').value = data.host;
+                    document.getElementById('stationApiPort').value = data.api_port;
+                    document.getElementById('stationUsername').value = data.username;
+                    document.getElementById('stationInterface').value = data.hotspot_interface;
+                    document.getElementById('stationAddressPool').value = data.address_pool;
+                    document.getElementById('stationIsActive').checked = data.is_active;
+                    
+                    // Payment configuration fields
+                    document.getElementById('businessName').value = data.business_name || '';
+                    document.getElementById('paymentMethod').value = data.payment_method || 'paybill';
+                    document.getElementById('enablePayments').checked = data.enable_payments !== false;
+                    document.getElementById('paybillNumber').value = data.paybill_number || '';
+                    document.getElementById('accountNumber').value = data.account_number || '';
+                    document.getElementById('tillNumber').value = data.till_number || '';
+                    
+                    // KCB Account configuration
+                    document.getElementById('kcbAccountType').value = data.kcb_account_type || 'paybill';
+                    document.getElementById('kcbAccountNumber').value = data.kcb_account_number || '';
+                    document.getElementById('accountName').value = data.account_name || '';
+                    
+                    // Toggle payment fields based on method
+                    togglePaymentFields();
+                    
+                    // Show test credentials button for existing stations
+                    document.getElementById('testCredentialsSection').style.display = 'block';
+                    
+                    new bootstrap.Modal(document.getElementById('stationModal')).show();
+                })
+                .catch(error => {
+                    alert('Error loading station data: ' + error);
+                });
+        }
+        
+        function saveStation() {
+            const formData = new FormData(document.getElementById('stationForm'));
+            formData.append('is_active', document.getElementById('stationIsActive').checked ? 'true' : 'false');
+            
+            const url = currentStationId ? 
+                `/dashboard/stations/${currentStationId}/update/` : 
+                '/dashboard/stations/create/';
+            
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    bootstrap.Modal.getInstance(document.getElementById('stationModal')).hide();
+                    location.reload(); // Refresh to show changes
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error saving station: ' + error);
+            });
+        }
+        
+        function deleteStation(stationId, stationName) {
+            if (confirm(`Are you sure you want to delete the station "${stationName}"?`)) {
+                fetch(`/dashboard/stations/${stationId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Error deleting station: ' + error);
+                });
+            }
+        }
+        
+        // Enhanced download functions for stations
+        function downloadCompleteConfig(stationId) {
+            // Download complete configuration package (ZIP)
+            showDownloadNotification('Preparing complete configuration package...', 'info');
+            window.location.href = `/dashboard/stations/${stationId}/config/`;
+        }
+        
+        function downloadConfigFile(stationId) {
+            // Download only the RouterOS configuration file (.rsc)
+            showDownloadNotification('Downloading MikroTik configuration file...', 'info');
+            window.location.href = `/dashboard/stations/${stationId}/config-file/`;
+        }
+        
+        function downloadLoginPage(stationId) {
+            // Download only the custom login page (.html)
+            showDownloadNotification('Downloading custom login page...', 'info');
+            window.location.href = `/dashboard/stations/${stationId}/login-page/`;
+        }
+        
+        // Legacy function for backward compatibility
+        function downloadConfig(stationId) {
+            // Default to complete package download
+            downloadCompleteConfig(stationId);
+        }
+        
+        function showDownloadNotification(message, type = 'info') {
+            // Create and show download notification
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                <i class="fas fa-download me-2"></i>${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            // Auto-remove after 4 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 4000);
+        }
+        
+        function testConnection(stationId) {
+            alert(`Testing connection to station ${stationId} - functionality will be implemented`);
+        }
+        
+        // Functions for new dashboard sections
+        function refreshSessions() {
+            const tbody = document.getElementById('sessionsTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading sessions...</td></tr>';
+            
+            fetch('/dashboard/api/sessions/')
+                .then(response => response.json())
+                .then(data => {
+                    tbody.innerHTML = '';
+                    if (data.sessions.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No active sessions found</td></tr>';
+                        return;
+                    }
+                    
+                    data.sessions.forEach(session => {
+                        const row = document.createElement('tr');
+                        const startTime = new Date(session.acctstarttime);
+                        const duration = Math.floor(session.acctsessiontime / 60); // minutes
+                        const dataUsage = ((session.acctinputoctets + session.acctoutputoctets) / 1024 / 1024).toFixed(2); // MB
+                        
+                        row.innerHTML = `
+                            <td><strong>${session.username}</strong></td>
+                            <td>${session.nasipaddress}</td>
+                            <td>${startTime.toLocaleString()}</td>
+                            <td>${duration} minutes</td>
+                            <td>${dataUsage} MB</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger" onclick="disconnectUser('${session.username}')">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading sessions</td></tr>';
+                    console.error('Error loading sessions:', error);
+                });
+        }
+        
+        function disconnectUser(username) {
+            if (confirm(`Are you sure you want to disconnect user ${username}?`)) {
+                alert('Disconnect functionality will be implemented');
+            }
+        }
+        
+        function exportTransactions() {
+            window.location.href = '/dashboard/export/transactions/';
+        }
+        
+        function editUser(userId) {
+            alert(`Edit user functionality will be implemented for user ID: ${userId}`);
+        }
+        
+        function deleteUser(userId, phoneNumber) {
+            if (confirm(`Are you sure you want to delete user ${phoneNumber}?`)) {
+                alert('Delete user functionality will be implemented');
+            }
+        }
+        
+        // Payment field management functions
+        function togglePaymentFields() {
+            const paymentMethod = document.getElementById('paymentMethod').value;
+            const paybillFields = document.getElementById('paybillFields');
+            const tillFields = document.getElementById('tillFields');
+            
+            if (paymentMethod === 'paybill') {
+                paybillFields.style.display = 'block';
+                tillFields.style.display = 'none';
+                document.getElementById('paybillNumber').required = true;
+                document.getElementById('tillNumber').required = false;
+            } else if (paymentMethod === 'till') {
+                paybillFields.style.display = 'none';
+                tillFields.style.display = 'block';
+                document.getElementById('paybillNumber').required = false;
+                document.getElementById('tillNumber').required = true;
+            } else {
+                paybillFields.style.display = 'block';
+                tillFields.style.display = 'none';
+                document.getElementById('paybillNumber').required = false;
+                document.getElementById('tillNumber').required = false;
+            }
+        }
+        
+        function testPaymentCredentials(stationId) {
+            if (!stationId) {
+                alert('Please save the station first before testing credentials');
+                return;
+            }
+            
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+            button.disabled = true;
+            
+            fetch(`/dashboard/stations/${stationId}/test-payment/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('✅ Payment credentials are valid and API is accessible!');
+                    } else {
+                        alert('❌ Payment test failed: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('❌ Error testing credentials: ' + error);
+                })
+                .finally(() => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                });
+        }
+        
+        function loadUsersData() {
+            // This function would load users data dynamically if needed
+            // For now, the data is loaded from the server-side template
+        }
+        
+        function loadTransactionsData() {
+            // This function would load transactions data dynamically if needed
+            // For now, the data is loaded from the server-side template
+        }
+        
+        // Initialize sections when they become active
+        function initializeSection(sectionName) {
+            switch(sectionName) {
+                case 'sessions':
+                    refreshSessions();
+                    break;
+                case 'users':
+                    loadUsersData();
+                    break;
+                case 'transactions':
+                    loadTransactionsData();
+                    break;
+                default:
+                    // No special initialization needed
+                    break;
+            }
+        }
+        
+        // Enhanced showSection function
+        const originalShowSection = showSection;
+        showSection = function(sectionName) {
+            originalShowSection(sectionName);
+            // Initialize the section after showing it
+            setTimeout(() => initializeSection(sectionName), 100);
+        };
+        
+        // Utility function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+    </script>
+</body>
+</html>

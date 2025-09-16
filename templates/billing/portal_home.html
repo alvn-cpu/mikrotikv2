@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}WiFi Portal - Welcome{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-body text-center p-5">
+                <div class="mb-4">
+                    <i class="fas fa-wifi text-primary" style="font-size: 4rem;"></i>
+                </div>
+                
+                <h1 class="h2 fw-bold text-primary mb-3">Welcome to WiFi Portal</h1>
+                <p class="text-muted mb-4">
+                    Get instant internet access with our affordable plans. 
+                    Choose from time-based or data-based packages to suit your needs.
+                </p>
+                
+                <div class="row text-center mb-4">
+                    <div class="col-4">
+                        <div class="border-end">
+                            <h4 class="text-primary fw-bold">{{ active_plans_count }}</h4>
+                            <small class="text-muted">Plans Available</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="border-end">
+                            <h4 class="text-success fw-bold">
+                                <i class="fas fa-shield-alt"></i>
+                            </h4>
+                            <small class="text-muted">Secure</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <h4 class="text-info fw-bold">
+                            <i class="fas fa-bolt"></i>
+                        </h4>
+                        <small class="text-muted">Fast</small>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <a href="{% url 'billing:plan_selection' %}?mac={{ mac_address }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-list me-2"></i>View Available Plans
+                    </a>
+                    <a href="{% url 'billing:user_status' %}?mac={{ mac_address }}" class="btn btn-outline-primary">
+                        <i class="fas fa-user me-2"></i>Check My Status
+                    </a>
+                </div>
+                
+                {% if mac_address %}
+                <div class="mt-4 p-3 bg-light rounded">
+                    <small class="text-muted">
+                        <i class="fas fa-laptop me-1"></i>
+                        Device: {{ mac_address }}
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-clock text-warning mb-3" style="font-size: 2rem;"></i>
+                        <h5>Time-Based Plans</h5>
+                        <p class="text-muted small">Perfect for quick browsing sessions</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-database text-info mb-3" style="font-size: 2rem;"></i>
+                        <h5>Data-Based Plans</h5>
+                        <p class="text-muted small">Great for heavy data usage</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title text-center mb-4">How it works</h5>
+                <div class="row">
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 50px; height: 50px;">
+                            <span class="fw-bold">1</span>
+                        </div>
+                        <h6>Select Plan</h6>
+                        <p class="text-muted small">Choose from our affordable packages</p>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 50px; height: 50px;">
+                            <span class="fw-bold">2</span>
+                        </div>
+                        <h6>Enter Number</h6>
+                        <p class="text-muted small">Provide your mobile number</p>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 50px; height: 50px;">
+                            <span class="fw-bold">3</span>
+                        </div>
+                        <h6>Pay via STK</h6>
+                        <p class="text-muted small">Complete payment on your phone</p>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 50px; height: 50px;">
+                            <span class="fw-bold">4</span>
+                        </div>
+                        <h6>Get Online</h6>
+                        <p class="text-muted small">Start browsing immediately</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

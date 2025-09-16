@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block title %}Payment - {{ plan.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+    }
+    .payment-card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    .plan-summary {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        padding: 2rem;
+    }
+    .form-control {
+        border: 2px solid #e9ecef;
+        border-radius: 15px;
+        padding: 15px 20px;
+        font-size: 1.1rem;
+    }
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+    }
+    .btn-pay {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        border: none;
+        border-radius: 15px;
+        padding: 15px 40px;
+        font-weight: bold;
+        color: white;
+        font-size: 1.1rem;
+        transition: all 0.3s;
+    }
+    .btn-pay:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(40, 167, 69, 0.3);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="payment-card">
+                <div class="plan-summary text-center">
+                    <h2 class="mb-3">{{ plan.name }}</h2>
+                    <div class="display-4 fw-bold mb-3">KES {{ plan.price }}</div>
+                    <p class="mb-0 opacity-75">{{ plan.description }}</p>
+                </div>
+                
+                <div class="p-5">
+                    <form method="post" id="paymentForm">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="phone_number" class="form-label fw-bold">Mobile Number (M-Pesa)</label>
+                            <input type="tel" 
+                                   class="form-control" 
+                                   id="phone_number" 
+                                   name="phone_number" 
+                                   placeholder="0712345678 or 254712345678" 
+                                   required
+                                   pattern="^(254|0)[17][0-9]{8}$"
+                                   title="Enter a valid Kenyan phone number">
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Enter your Safaricom or Airtel number for STK Push payment
+                            </div>
+                        </div>
+                        
+                        <div class="plan-details mb-4 p-3 bg-light rounded-3">
+                            <h6 class="fw-bold mb-3">Plan Details</h6>
+                            <div class="row">
+                                {% if plan.duration_minutes %}
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <i class="fas fa-clock text-primary fs-3"></i>
+                                        <div class="small text-muted mt-1">Duration</div>
+                                        <div class="fw-bold">{{ plan.duration_display }}</div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if plan.data_limit_mb %}
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <i class="fas fa-database text-info fs-3"></i>
+                                        <div class="small text-muted mt-1">Data</div>
+                                        <div class="fw-bold">{{ plan.data_limit_mb }} MB</div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <i class="fas fa-tachometer-alt text-success fs-3"></i>
+                                        <div class="small text-muted mt-1">Speed</div>
+                                        <div class="fw-bold">{{ plan.download_speed_kbps|floatformat:0 }}K</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-pay" id="payBtn">
+                                <i class="fas fa-credit-card me-2"></i>
+                                Pay KES {{ plan.price }} Now
+                            </button>
+                            <a href="{% url 'billing:plan_selection' %}?mac={{ mac_address }}" 
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Choose Different Plan
+                            </a>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <small class="text-muted">
+                                <i class="fas fa-shield-alt me-1"></i>
+                                Secure payment powered by KCB Buni • Your payment is protected
+                            </small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('paymentForm').addEventListener('submit', function(e) {
+    const btn = document.getElementById('payBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    btn.disabled = true;
+});
+
+// Phone number formatting
+document.getElementById('phone_number').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    
+    // Auto-format phone number
+    if (value.startsWith('0')) {
+        value = '254' + value.substring(1);
+    } else if (!value.startsWith('254')) {
+        value = '254' + value;
+    }
+    
+    // Limit length
+    if (value.length > 12) {
+        value = value.substring(0, 12);
+    }
+    
+    // Display formatted version
+    if (value.startsWith('254')) {
+        const displayValue = '0' + value.substring(3);
+        if (displayValue.length <= 10) {
+            e.target.value = displayValue;
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1232 @@
+{% extends 'base.html' %}
+
+{% block title %}Futuristic WiFi Plans - 3D Experience{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% url 'static' 'css/futuristic-animations.css' %}">
+<link rel="stylesheet" href="{% url 'static' 'css/responsive-mobile.css' %}">
+<style>
+    /* ========================================
+       FUTURISTIC 3D PLANS INTERFACE
+    ======================================== */
+    
+    :root {
+        /* Cyberpunk color scheme */
+        --cyber-primary: #00f2fe;
+        --cyber-secondary: #4facfe;
+        --cyber-accent: #ff0080;
+        --cyber-warning: #ffa500;
+        --cyber-success: #00ff88;
+        
+        /* Glassmorphism */
+        --glass-bg: rgba(15, 15, 25, 0.8);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        
+        /* Neon effects */
+        --neon-glow: 0 0 20px currentColor;
+        --neon-text-shadow: 0 0 10px currentColor;
+        
+        /* 3D perspective */
+        --flip-duration: 0.8s;
+        --perspective: 1000px;
+    }
+
+    /* Background and atmosphere */
+    body {
+        background: 
+            radial-gradient(circle at 20% 80%, rgba(0, 242, 254, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(255, 0, 128, 0.1) 0%, transparent 50%),
+            linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+    }
+
+    /* Animated background particles */
+    .floating-particles {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .particle {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background: var(--cyber-primary);
+        border-radius: 50%;
+        animation: float 20s infinite linear;
+        box-shadow: var(--neon-glow);
+    }
+
+    @keyframes float {
+        0% {
+            transform: translateY(100vh) rotate(0deg);
+            opacity: 0;
+        }
+        10% {
+            opacity: 1;
+        }
+        90% {
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100px) rotate(360deg);
+            opacity: 0;
+        }
+    }
+
+    /* Main content container */
+    .plans-container {
+        position: relative;
+        z-index: 10;
+        padding: 4rem 0;
+    }
+
+    /* Header section */
+    .hero-header {
+        text-align: center;
+        margin-bottom: 4rem;
+        position: relative;
+    }
+
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 900;
+        background: linear-gradient(45deg, var(--cyber-primary), var(--cyber-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: var(--neon-text-shadow);
+        margin-bottom: 1rem;
+        animation: glow-pulse 2s ease-in-out infinite alternate;
+    }
+
+    .hero-subtitle {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 2rem;
+        text-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+    }
+
+    @keyframes glow-pulse {
+        from {
+            filter: brightness(1) drop-shadow(0 0 20px rgba(0, 242, 254, 0.3));
+        }
+        to {
+            filter: brightness(1.2) drop-shadow(0 0 30px rgba(0, 242, 254, 0.6));
+        }
+    }
+
+    /* 3D Flip Card System */
+    .plans-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+        gap: 3rem;
+        perspective: 1200px;
+        padding: 3rem 0;
+    }
+
+    .plan-card-container {
+        position: relative;
+        height: 520px;
+        perspective: 1200px;
+        margin: 1rem;
+    }
+
+    .plan-card-3d {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        cursor: pointer;
+        /* Initial 3D positioning */
+        transform: rotateX(5deg) rotateY(-5deg);
+    }
+
+    .plan-card-3d:hover {
+        /* Enhanced 3D hover effect */
+        transform: rotateX(8deg) rotateY(-8deg) translateY(-15px);
+    }
+
+    .plan-card-3d.flipped {
+        /* Dramatic flip with bounce */
+        transform: rotateX(5deg) rotateY(185deg) translateZ(20px);
+    }
+
+    .plan-card-3d.flipping {
+        /* Mid-flip state for enhanced realism */
+        transform: rotateX(15deg) rotateY(90deg) scale(1.1) translateZ(50px);
+    }
+
+    .card-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        border-radius: 18px;
+        background: 
+            linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%),
+            var(--glass-bg);
+        backdrop-filter: blur(25px);
+        border: 1.5px solid var(--glass-border);
+        /* Realistic card shadows */
+        box-shadow: 
+            0 25px 60px rgba(0, 0, 0, 0.4),
+            0 10px 20px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+        transition: all 0.4s ease;
+        /* Card thickness illusion */
+        transform: translateZ(1px);
+    }
+
+    /* Card edge lighting effects */
+    .card-face::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, 
+            var(--cyber-primary), 
+            var(--cyber-secondary), 
+            var(--cyber-accent),
+            var(--cyber-primary));
+        border-radius: 20px;
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        filter: blur(8px);
+    }
+
+    /* Realistic card thickness */
+    .card-face::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(145deg, 
+            rgba(255, 255, 255, 0.1) 0%, 
+            rgba(255, 255, 255, 0.05) 50%,
+            rgba(0, 0, 0, 0.1) 100%);
+        border-radius: 18px;
+        pointer-events: none;
+        mix-blend-mode: overlay;
+    }
+
+    /* Animated top edge glow */
+    .card-face .neon-edge {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, 
+            transparent 0%,
+            var(--cyber-primary) 20%, 
+            var(--cyber-secondary) 50%, 
+            var(--cyber-accent) 80%,
+            transparent 100%);
+        animation: neon-flow 4s ease-in-out infinite;
+        opacity: 0.8;
+    }
+
+    @keyframes neon-flow {
+        0%, 100% {
+            transform: translateX(-100%) scaleX(0.5);
+            opacity: 0.3;
+        }
+        50% {
+            transform: translateX(100%) scaleX(1.2);
+            opacity: 1;
+        }
+    }
+
+    /* Front face styles */
+    .card-front {
+        z-index: 2;
+        /* Add subtle card bend */
+        transform: rotateX(1deg);
+    }
+
+    .card-back {
+        transform: rotateY(180deg) rotateX(1deg);
+        z-index: 1;
+        /* Different background for back */
+        background: 
+            linear-gradient(145deg, rgba(255, 0, 128, 0.05) 0%, rgba(0, 242, 254, 0.05) 100%),
+            var(--glass-bg);
+    }
+
+    /* Enhanced hover effects */
+    .plan-card-3d:hover .card-face {
+        box-shadow: 
+            0 35px 80px rgba(0, 0, 0, 0.5),
+            0 15px 30px rgba(0, 0, 0, 0.3),
+            0 0 60px rgba(0, 242, 254, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        border-color: rgba(0, 242, 254, 0.5);
+    }
+
+    .plan-card-3d:hover .card-face::before {
+        opacity: 0.4;
+    }
+
+    /* Card content */
+    .card-content {
+        padding: 2rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+    }
+
+    .plan-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        background: linear-gradient(45deg, var(--cyber-primary), var(--cyber-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 0 10px currentColor);
+        animation: icon-float 3s ease-in-out infinite;
+    }
+
+    @keyframes icon-float {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    .plan-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--cyber-primary);
+        text-align: center;
+        margin-bottom: 1rem;
+        text-shadow: var(--neon-text-shadow);
+    }
+
+    .plan-price {
+        font-size: 3rem;
+        font-weight: 900;
+        text-align: center;
+        margin: 1rem 0;
+        background: linear-gradient(45deg, var(--cyber-success), var(--cyber-primary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 0 15px rgba(0, 255, 136, 0.5));
+    }
+
+    .plan-features {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.8rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.95rem;
+    }
+
+    .feature-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .feature-icon {
+        margin-right: 0.8rem;
+        font-size: 1.2rem;
+        width: 20px;
+        text-align: center;
+    }
+
+    .feature-icon.time { color: var(--cyber-primary); }
+    .feature-icon.speed { color: var(--cyber-success); }
+    .feature-icon.data { color: var(--cyber-secondary); }
+    .feature-icon.devices { color: var(--cyber-warning); }
+
+    /* Flip trigger button */
+    .flip-trigger {
+        background: linear-gradient(45deg, var(--cyber-primary), var(--cyber-secondary));
+        border: none;
+        border-radius: 15px;
+        padding: 1rem 2rem;
+        color: white;
+        font-weight: 700;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 0 5px 20px rgba(0, 242, 254, 0.3);
+    }
+
+    .flip-trigger::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .flip-trigger:hover::before {
+        left: 100%;
+    }
+
+    .flip-trigger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 242, 254, 0.5);
+    }
+
+    /* Back face - Phone input form */
+    .phone-input-section {
+        text-align: center;
+    }
+
+    .back-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--cyber-accent);
+        margin-bottom: 1rem;
+        text-shadow: 0 0 15px currentColor;
+    }
+
+    .back-subtitle {
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 2rem;
+        font-size: 1rem;
+    }
+
+    .phone-input-group {
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+    .phone-input {
+        width: 100%;
+        padding: 1rem 1.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid var(--glass-border);
+        border-radius: 12px;
+        color: white;
+        font-size: 1.1rem;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+
+    .phone-input:focus {
+        outline: none;
+        border-color: var(--cyber-primary);
+        box-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .phone-input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .input-label {
+        position: absolute;
+        top: -8px;
+        left: 20px;
+        background: var(--glass-bg);
+        padding: 0 10px;
+        font-size: 0.9rem;
+        color: var(--cyber-primary);
+        font-weight: 600;
+    }
+
+    .submit-btn {
+        background: linear-gradient(45deg, var(--cyber-accent), var(--cyber-primary));
+        border: none;
+        border-radius: 15px;
+        padding: 1rem 2.5rem;
+        color: white;
+        font-weight: 700;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        width: 100%;
+        margin-bottom: 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .submit-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(255, 0, 128, 0.4);
+    }
+
+    .submit-btn:active {
+        transform: translateY(-1px);
+    }
+
+    .flip-back-btn {
+        background: transparent;
+        border: 2px solid var(--cyber-secondary);
+        border-radius: 10px;
+        padding: 0.8rem 1.5rem;
+        color: var(--cyber-secondary);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .flip-back-btn:hover {
+        background: var(--cyber-secondary);
+        color: white;
+        box-shadow: 0 5px 15px rgba(79, 172, 254, 0.3);
+    }
+
+    /* Plan type indicators */
+    .plan-type-badge {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(45deg, var(--cyber-accent), var(--cyber-warning));
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 0 3px 10px rgba(255, 0, 128, 0.3);
+    }
+
+    .plan-type-badge.time-plan {
+        background: linear-gradient(45deg, var(--cyber-primary), var(--cyber-secondary));
+    }
+
+    .plan-type-badge.data-plan {
+        background: linear-gradient(45deg, var(--cyber-secondary), var(--cyber-success));
+    }
+
+    /* Loading animation for form submission */
+    .loading-spinner {
+        display: none;
+        width: 20px;
+        height: 20px;
+        border: 2px solid transparent;
+        border-top: 2px solid currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 10px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .btn-loading .loading-spinner {
+        display: inline-block;
+    }
+
+    /* Quick guide section */
+    .quick-guide {
+        margin-top: 4rem;
+        background: var(--glass-bg);
+        backdrop-filter: blur(30px);
+        border-radius: 20px;
+        border: 1px solid var(--glass-border);
+        padding: 2rem;
+        box-shadow: var(--glass-shadow);
+    }
+
+    .guide-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--cyber-primary);
+        text-align: center;
+        margin-bottom: 2rem;
+        text-shadow: var(--neon-text-shadow);
+    }
+
+    .guide-item {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .guide-item:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: var(--cyber-primary);
+        box-shadow: 0 5px 20px rgba(0, 242, 254, 0.1);
+    }
+
+    .guide-item h6 {
+        color: var(--cyber-success);
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+
+    .guide-item p {
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .guide-item strong {
+        color: var(--cyber-primary);
+        font-weight: 600;
+    }
+
+    /* Footer */
+    .footer-info {
+        text-align: center;
+        padding: 2rem 0;
+        color: rgba(255, 255, 255, 0.6);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        margin-top: 4rem;
+    }
+
+    .footer-info i {
+        color: var(--cyber-primary);
+        margin: 0 0.5rem;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        
+        .plans-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        .plan-card-container {
+            height: 480px;
+        }
+        
+        .card-content {
+            padding: 1.5rem;
+        }
+        
+        .plan-price {
+            font-size: 2.5rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .hero-title {
+            font-size: 2rem;
+        }
+        
+        .plan-card-container {
+            height: 450px;
+        }
+        
+        .card-content {
+            padding: 1.2rem;
+        }
+        
+        .plan-price {
+            font-size: 2rem;
+        }
+        
+        .flip-trigger, .submit-btn {
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Create floating particles
+    createFloatingParticles();
+    
+    // Initialize 3D flip cards
+    initializeFlipCards();
+    
+    // Initialize form submissions
+    initializeFormSubmissions();
+});
+
+function createFloatingParticles() {
+    const particlesContainer = document.querySelector('.floating-particles');
+    const particleCount = 50;
+    
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 20 + 's';
+        particle.style.animationDuration = (Math.random() * 20 + 10) + 's';
+        particlesContainer.appendChild(particle);
+    }
+}
+
+function initializeFlipCards() {
+    const flipTriggers = document.querySelectorAll('.flip-trigger');
+    const flipBackBtns = document.querySelectorAll('.flip-back-btn');
+    
+    flipTriggers.forEach(trigger => {
+        trigger.addEventListener('click', function(e) {
+            e.preventDefault();
+            const card = this.closest('.plan-card-container').querySelector('.plan-card-3d');
+            
+            // Prevent multiple flips
+            if (card.classList.contains('flipping') || card.classList.contains('flipped')) {
+                return;
+            }
+            
+            // Start flip animation sequence
+            card.classList.add('flipping');
+            
+            // Mid-flip effects
+            setTimeout(() => {
+                // Add dramatic scaling and lighting effects
+                card.style.filter = 'brightness(1.2) drop-shadow(0 0 30px rgba(0, 242, 254, 0.6))';
+            }, 250);
+            
+            // Complete the flip
+            setTimeout(() => {
+                card.classList.remove('flipping');
+                card.classList.add('flipped');
+                card.style.filter = '';
+                
+                // Add flip completion effect
+                const sparkles = createSparkleEffect(card);
+                
+                // Focus on phone input after animation
+                setTimeout(() => {
+                    const phoneInput = card.querySelector('.phone-input');
+                    if (phoneInput) {
+                        phoneInput.focus();
+                        // Add gentle glow to input
+                        phoneInput.style.boxShadow = '0 0 20px rgba(0, 242, 254, 0.4)';
+                        setTimeout(() => {
+                            phoneInput.style.boxShadow = '';
+                        }, 1000);
+                    }
+                }, 200);
+            }, 500);
+        });
+    });
+    
+    flipBackBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const card = this.closest('.plan-card-container').querySelector('.plan-card-3d');
+            
+            // Prevent multiple flips
+            if (card.classList.contains('flipping')) {
+                return;
+            }
+            
+            // Start reverse flip animation
+            card.classList.add('flipping');
+            
+            setTimeout(() => {
+                card.classList.remove('flipping');
+                card.classList.remove('flipped');
+            }, 500);
+        });
+    });
+    
+    // Add realistic card tilting on mouse move
+    document.querySelectorAll('.plan-card-3d').forEach(card => {
+        const container = card.closest('.plan-card-container');
+        
+        container.addEventListener('mousemove', function(e) {
+            if (card.classList.contains('flipping') || card.classList.contains('flipped')) {
+                return;
+            }
+            
+            const rect = container.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            const rotateX = (y - centerY) / 10;
+            const rotateY = (centerX - x) / 10;
+            
+            card.style.transform = `rotateX(${rotateX + 5}deg) rotateY(${rotateY - 5}deg) translateY(-5px)`;
+        });
+        
+        container.addEventListener('mouseleave', function() {
+            if (!card.classList.contains('flipping') && !card.classList.contains('flipped')) {
+                card.style.transform = 'rotateX(5deg) rotateY(-5deg)';
+            }
+        });
+    });
+}
+
+function createSparkleEffect(card) {
+    const sparkles = [];
+    const sparkleCount = 8;
+    
+    for (let i = 0; i < sparkleCount; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle';
+        sparkle.style.cssText = `
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--cyber-primary);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            box-shadow: 0 0 10px currentColor;
+            top: ${Math.random() * 100}%;
+            left: ${Math.random() * 100}%;
+            animation: sparkleAnim 1s ease-out forwards;
+        `;
+        
+        card.appendChild(sparkle);
+        sparkles.push(sparkle);
+        
+        // Remove sparkle after animation
+        setTimeout(() => {
+            if (sparkle.parentNode) {
+                sparkle.parentNode.removeChild(sparkle);
+            }
+        }, 1000);
+    }
+    
+    // Add sparkle keyframes if not already added
+    if (!document.querySelector('#sparkle-styles')) {
+        const sparkleStyles = document.createElement('style');
+        sparkleStyles.id = 'sparkle-styles';
+        sparkleStyles.textContent = `
+            @keyframes sparkleAnim {
+                0% {
+                    transform: scale(0) rotate(0deg);
+                    opacity: 1;
+                }
+                50% {
+                    transform: scale(1.5) rotate(180deg);
+                    opacity: 1;
+                }
+                100% {
+                    transform: scale(0) rotate(360deg);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(sparkleStyles);
+    }
+    
+    return sparkles;
+}
+
+function initializeFormSubmissions() {
+    const forms = document.querySelectorAll('.phone-form');
+    
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitBtn = this.querySelector('.submit-btn');
+            const phoneInput = this.querySelector('.phone-input');
+            const phoneNumber = phoneInput.value.trim();
+            
+            // Validate phone number
+            if (!validatePhoneNumber(phoneNumber)) {
+                showNotification('Please enter a valid phone number (e.g., 0712345678)', 'error');
+                phoneInput.focus();
+                return;
+            }
+            
+            // Add loading state
+            submitBtn.classList.add('btn-loading');
+            submitBtn.disabled = true;
+            
+            // Get plan data
+            const planId = this.dataset.planId;
+            const macAddress = new URLSearchParams(window.location.search).get('mac');
+            
+            // Simulate form submission (replace with actual form submission)
+            setTimeout(() => {
+                // Construct payment URL with phone number
+                const paymentUrl = `{% url 'billing:payment_form' '0' %}`.replace('0', planId) + 
+                                  `?mac=${macAddress}&phone=${encodeURIComponent(phoneNumber)}`;
+                
+                showNotification('Redirecting to payment...', 'success');
+                
+                setTimeout(() => {
+                    window.location.href = paymentUrl;
+                }, 1000);
+            }, 1500);
+        });
+    });
+}
+
+function validatePhoneNumber(phone) {
+    // Kenyan phone number validation
+    const phoneRegex = /^(0|\+254|254)([71])\d{8}$/;
+    return phoneRegex.test(phone.replace(/\s+/g, ''));
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    // Add styles if not already added
+    if (!document.querySelector('#notification-styles')) {
+        const styles = document.createElement('style');
+        styles.id = 'notification-styles';
+        styles.textContent = `
+            .notification {
+                position: fixed;
+                top: 2rem;
+                right: 2rem;
+                background: var(--glass-bg);
+                backdrop-filter: blur(30px);
+                border: 1px solid var(--glass-border);
+                border-radius: 15px;
+                padding: 1rem 1.5rem;
+                color: white;
+                z-index: 10000;
+                animation: slideInRight 0.3s ease;
+                box-shadow: var(--glass-shadow);
+            }
+            .notification.success {
+                border-color: var(--cyber-success);
+                box-shadow: 0 5px 20px rgba(0, 255, 136, 0.2);
+            }
+            .notification.error {
+                border-color: var(--cyber-accent);
+                box-shadow: 0 5px 20px rgba(255, 0, 128, 0.2);
+            }
+            .notification-content {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(styles);
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Remove notification after 4 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 4000);
+}
+
+// Add smooth scroll behavior for better UX
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    });
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<!-- Floating particles background -->
+<div class="floating-particles"></div>
+
+<div class="plans-container">
+    <div class="container">
+        <!-- Hero Header -->
+        <div class="hero-header">
+            <h1 class="hero-title">Choose Your WiFi Plan</h1>
+            <p class="hero-subtitle">Experience the future of internet connectivity</p>
+        </div>
+
+        <!-- 3D Plans Grid -->
+        <div class="plans-grid">
+            {% for plan in time_plans %}
+            <div class="plan-card-container">
+                <div class="plan-card-3d">
+                    <!-- Front Face -->
+                    <div class="card-face card-front">
+                        <div class="neon-edge"></div>
+                        <div class="plan-type-badge time-plan">Time Based</div>
+                        <div class="card-content">
+                            <div class="text-center">
+                                <div class="plan-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <h3 class="plan-title">{{ plan.name }}</h3>
+                                <div class="plan-price">
+                                    KES {{ plan.price }}
+                                </div>
+                            </div>
+                            
+                            <div class="plan-features">
+                                <div class="feature-item">
+                                    <i class="fas fa-clock feature-icon time"></i>
+                                    <strong>{{ plan.duration_display }}</strong> access time
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-tachometer-alt feature-icon speed"></i>
+                                    {{ plan.download_speed_kbps|floatformat:0 }} Kbps speed
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-wifi feature-icon devices"></i>
+                                    Unlimited devices
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-shield-alt feature-icon"></i>
+                                    Secure connection
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <p class="text-muted small mb-3">{{ plan.description }}</p>
+                                <button class="flip-trigger">
+                                    <i class="fas fa-mobile-alt me-2"></i>
+                                    Select Plan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Back Face -->
+                    <div class="card-face card-back">
+                        <div class="neon-edge"></div>
+                        <div class="card-content phone-input-section">
+                            <div>
+                                <h3 class="back-title">{{ plan.name }}</h3>
+                                <p class="back-subtitle">Enter your phone number to continue</p>
+                                
+                                <form class="phone-form" data-plan-id="{{ plan.id }}">
+                                    <div class="phone-input-group">
+                                        <label class="input-label">Phone Number</label>
+                                        <input 
+                                            type="tel" 
+                                            class="phone-input" 
+                                            placeholder="e.g., 0712345678"
+                                            pattern="^(0|\+254|254)([71])\d{8}$"
+                                            required
+                                        >
+                                    </div>
+                                    
+                                    <button type="submit" class="submit-btn">
+                                        <span class="loading-spinner"></span>
+                                        <i class="fas fa-credit-card me-2"></i>
+                                        Proceed to Payment
+                                    </button>
+                                </form>
+                                
+                                <div class="text-center">
+                                    <p class="text-muted small mb-2">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        KES {{ plan.price }} • {{ plan.duration_display }}
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button class="flip-back-btn">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    Back to Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            {% for plan in data_plans %}
+            <div class="plan-card-container">
+                <div class="plan-card-3d">
+                    <!-- Front Face -->
+                    <div class="card-face card-front">
+                        <div class="neon-edge"></div>
+                        <div class="plan-type-badge data-plan">Data Based</div>
+                        <div class="card-content">
+                            <div class="text-center">
+                                <div class="plan-icon">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <h3 class="plan-title">{{ plan.name }}</h3>
+                                <div class="plan-price">
+                                    KES {{ plan.price }}
+                                </div>
+                            </div>
+                            
+                            <div class="plan-features">
+                                <div class="feature-item">
+                                    <i class="fas fa-database feature-icon data"></i>
+                                    <strong>{{ plan.data_limit_mb }} MB</strong> data allowance
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-tachometer-alt feature-icon speed"></i>
+                                    {{ plan.download_speed_kbps|floatformat:0 }} Kbps speed
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-calendar feature-icon time"></i>
+                                    30 days validity
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-wifi feature-icon devices"></i>
+                                    Unlimited devices
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <p class="text-muted small mb-3">{{ plan.description }}</p>
+                                <button class="flip-trigger">
+                                    <i class="fas fa-mobile-alt me-2"></i>
+                                    Select Plan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Back Face -->
+                    <div class="card-face card-back">
+                        <div class="neon-edge"></div>
+                        <div class="card-content phone-input-section">
+                            <div>
+                                <h3 class="back-title">{{ plan.name }}</h3>
+                                <p class="back-subtitle">Enter your phone number to continue</p>
+                                
+                                <form class="phone-form" data-plan-id="{{ plan.id }}">
+                                    <div class="phone-input-group">
+                                        <label class="input-label">Phone Number</label>
+                                        <input 
+                                            type="tel" 
+                                            class="phone-input" 
+                                            placeholder="e.g., 0712345678"
+                                            pattern="^(0|\+254|254)([71])\d{8}$"
+                                            required
+                                        >
+                                    </div>
+                                    
+                                    <button type="submit" class="submit-btn">
+                                        <span class="loading-spinner"></span>
+                                        <i class="fas fa-credit-card me-2"></i>
+                                        Proceed to Payment
+                                    </button>
+                                </form>
+                                
+                                <div class="text-center">
+                                    <p class="text-muted small mb-2">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        KES {{ plan.price }} • {{ plan.data_limit_mb }} MB
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button class="flip-back-btn">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    Back to Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Quick Guide Section -->
+        <div class="quick-guide">
+            <h5 class="guide-title">
+                <i class="fas fa-lightbulb me-2"></i>
+                How to Choose the Right Plan
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="guide-item">
+                        <h6>💬 Light Usage</h6>
+                        <p>WhatsApp, Email, Social Media browsing</p>
+                        <strong>Recommended: 30 Minutes or 100MB plans</strong>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="guide-item">
+                        <h6>🎥 Heavy Usage</h6>
+                        <p>Videos, Gaming, Large downloads</p>
+                        <strong>Recommended: 3+ Hours or 500MB+ plans</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-info">
+            <p>
+                <i class="fas fa-shield-alt"></i>Secure Payment
+                <i class="fas fa-bolt"></i>Instant Activation
+                <i class="fas fa-headset"></i>24/7 Support
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
