@@ -1,4 +1,4 @@
-# Core Django dependencies
+# Core Django dependencies - Updated for Railway deployment
 Django==5.2.6
 djangorestframework==3.16.1
 django-cors-headers==4.8.0
@@ -47,8 +47,6 @@ sentry-sdk==2.21.0
 django-allauth==0.63.6
 requests-oauthlib==2.0.0
 
-# Email and password reset
-django-email-verification==0.3.3
 
 # Development tools (optional)
 django-extensions==3.2.3
