@@ -1,288 +1,465 @@
+"""
+Professional Payment Views
+Handles WiFi plan purchases and KCB Buni STK Push integration
+"""
+
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from django.conf import settings
+from authentication.decorators import admin_required
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework import status
+
 from .models import PaymentTransaction, STKPushRequest, PaymentCallback
 from billing.models import WifiUser, WifiPlan
-from mikrotik_integration.services import create_mikrotik_user
+from .services.payment_processor import payment_processor
+from .services.kcb_client import kcb_client, KCBBuniError
+
 import json
 import logging
-import requests
-import uuid
 from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
 
-@csrf_exempt
-@require_http_methods(["POST"])
-def kcb_buni_callback(request):
-    """Handle KCB Buni payment callbacks"""
-    try:
-        callback_data = json.loads(request.body)
-        logger.info(f"KCB Buni callback received: {callback_data}")
-        
-        # Extract transaction ID from callback
-        transaction_id = callback_data.get('transaction_id') or callback_data.get('TransactionID')
-        
-        if not transaction_id:
-            logger.error("No transaction ID in callback")
-            return JsonResponse({'status': 'error', 'message': 'No transaction ID'}, status=400)
-        
-        # Find the transaction
-        try:
-            transaction = PaymentTransaction.objects.get(external_transaction_id=transaction_id)
-        except PaymentTransaction.DoesNotExist:
-            logger.error(f"Transaction not found: {transaction_id}")
-            return JsonResponse({'status': 'error', 'message': 'Transaction not found'}, status=404)
-        
-        # Store callback data
-        PaymentCallback.objects.create(
-            transaction=transaction,
-            callback_type='kcb_buni_callback',
-            callback_data=callback_data
-        )
-        
-        # Process the callback
-        result_code = callback_data.get('result_code') or callback_data.get('ResultCode')
-        if result_code == '0' or result_code == 0:  # Success
-            transaction.status = 'completed'
-            transaction.completed_at = timezone.now()
-            transaction.provider_response = callback_data
-            transaction.save()
-            
-            # Activate the user's plan
-            activate_user_plan(transaction)
-            
-            logger.info(f"Payment completed for transaction: {transaction.transaction_id}")
-        else:
-            transaction.status = 'failed'
-            transaction.failure_reason = callback_data.get('result_desc', 'Payment failed')
-            transaction.provider_response = callback_data
-            transaction.save()
-            
-            logger.warning(f"Payment failed for transaction: {transaction.transaction_id}")
-        
-        return JsonResponse({'status': 'success', 'message': 'Callback processed'})
+# =============================================================================
+# PAYMENT PURCHASE ENDPOINTS
+# =============================================================================
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def purchase_wifi_plan(request):
+    """
+    API endpoint for purchasing WiFi plans with STK Push
     
-    except json.JSONDecodeError:
-        logger.error("Invalid JSON in callback")
-        return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
-    except Exception as e:
-        logger.error(f"Error processing callback: {str(e)}")
-        return JsonResponse({'status': 'error', 'message': 'Internal error'}, status=500)
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def stk_push_callback(request):
-    """Handle STK Push callbacks"""
-    try:
-        callback_data = json.loads(request.body)
-        logger.info(f"STK Push callback received: {callback_data}")
-        
-        # Extract checkout request ID
-        checkout_request_id = callback_data.get('CheckoutRequestID')
-        
-        if not checkout_request_id:
-            logger.error("No checkout request ID in callback")
-            return JsonResponse({'status': 'error', 'message': 'No checkout request ID'}, status=400)
-        
-        # Find the STK push request
-        try:
-            stk_request = STKPushRequest.objects.get(checkout_request_id=checkout_request_id)
-        except STKPushRequest.DoesNotExist:
-            logger.error(f"STK Push request not found: {checkout_request_id}")
-            return JsonResponse({'status': 'error', 'message': 'STK Push request not found'}, status=404)
-        
-        # Update STK push request
-        stk_request.callback_response = callback_data
-        stk_request.result_code = callback_data.get('ResultCode', '')
-        stk_request.result_desc = callback_data.get('ResultDesc', '')
-        
-        if stk_request.result_code == '0':  # Success
-            stk_request.status = 'accepted'
-            stk_request.transaction.status = 'completed'
-            stk_request.transaction.completed_at = timezone.now()
-            stk_request.transaction.save()
-            
-            # Activate the user's plan
-            activate_user_plan(stk_request.transaction)
-            
-            logger.info(f"STK Push payment completed: {checkout_request_id}")
-        else:
-            stk_request.status = 'cancelled' if stk_request.result_code == '1032' else 'failed'
-            stk_request.transaction.status = 'failed'
-            stk_request.transaction.failure_reason = stk_request.result_desc
-            stk_request.transaction.save()
-            
-            logger.warning(f"STK Push payment failed: {checkout_request_id}")
-        
-        stk_request.save()
-        
-        return JsonResponse({'status': 'success', 'message': 'Callback processed'})
-    
-    except json.JSONDecodeError:
-        logger.error("Invalid JSON in STK Push callback")
-        return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
-    except Exception as e:
-        logger.error(f"Error processing STK Push callback: {str(e)}")
-        return JsonResponse({'status': 'error', 'message': 'Internal error'}, status=500)
-
-
-def payment_status(request, transaction_id):
-    """Display payment status page"""
-    transaction = get_object_or_404(PaymentTransaction, transaction_id=transaction_id)
-    
-    context = {
-        'transaction': transaction,
-        'plan': transaction.plan,
-        'user': transaction.user,
+    Expected payload:
+    {
+        "phone_number": "254712345678",
+        "plan_id": "uuid-here",
+        "user_details": {
+            "name": "John Doe",
+            "email": "john@example.com"  # optional
+        }
     }
-    
-    return render(request, 'payments/payment_status.html', context)
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def api_initiate_payment(request):
-    """API endpoint to initiate payment"""
+    """
     try:
-        data = json.loads(request.body)
+        data = request.data
         
         # Validate required fields
         phone_number = data.get('phone_number')
         plan_id = data.get('plan_id')
+        user_details = data.get('user_details', {})
         
-        if not phone_number or not plan_id:
-            return JsonResponse({'error': 'Phone number and plan ID required'}, status=400)
+        if not phone_number:
+            return Response({
+                'success': False,
+                'message': 'Phone number is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Get plan and create/get user
-        plan = get_object_or_404(WifiPlan, id=plan_id, is_active=True)
+        if not plan_id:
+            return Response({
+                'success': False,
+                'message': 'Plan ID is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate phone number format
+        try:
+            formatted_phone = kcb_client._format_phone_number(phone_number)
+        except KCBBuniError as e:
+            return Response({
+                'success': False,
+                'message': f'Invalid phone number: {str(e)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get WiFi plan
+        try:
+            plan = WifiPlan.objects.get(id=plan_id, is_active=True)
+        except WifiPlan.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'Plan not found or inactive'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Get or create WiFi user
         user, created = WifiUser.objects.get_or_create(
-            phone_number=phone_number,
-            defaults={'status': 'pending'}
+            phone_number=formatted_phone,
+            defaults={
+                'status': 'pending',
+                'created_at': timezone.now()
+            }
         )
         
-        # Create payment transaction
-        transaction = PaymentTransaction.objects.create(
+        # Update user details if provided
+        if user_details.get('name'):
+            user.name = user_details['name']
+        if user_details.get('email'):
+            user.email = user_details['email']
+        user.save()
+        
+        logger.info(f"Processing WiFi plan purchase: {user.phone_number} -> {plan.name}")
+        
+        # Process payment with our payment processor
+        result = payment_processor.process_wifi_plan_purchase(
             user=user,
             plan=plan,
-            amount=plan.price,
-            phone_number=phone_number,
-            payment_method='kcb_buni',
-            status='pending'
+            phone_number=formatted_phone
         )
         
-        # Here we would call the actual KCB Buni API
-        # For now, we'll simulate the process
-        transaction.status = 'processing'
-        transaction.external_transaction_id = f"KCB{transaction.transaction_id}"
-        transaction.save()
+        if result['success']:
+            return Response({
+                'success': True,
+                'data': {
+                    'transaction_id': result['transaction_id'],
+                    'checkout_request_id': result.get('checkout_request_id'),
+                    'message': result['message'],
+                    'plan': {
+                        'name': plan.name,
+                        'price': float(plan.price),
+                        'duration': plan.get_duration_display() if hasattr(plan, 'get_duration_display') else 'N/A'
+                    },
+                    'user': {
+                        'phone_number': user.phone_number,
+                        'status': user.status
+                    },
+                    'next_steps': result.get('next_steps', 'Complete payment on your phone')
+                }
+            }, status=status.HTTP_201_CREATED)
+        else:
+            return Response({
+                'success': False,
+                'message': result['message'],
+                'error_code': result.get('error_code')
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    except Exception as e:
+        logger.error(f"Error in purchase_wifi_plan: {str(e)}")
+        return Response({
+            'success': False,
+            'message': 'System error occurred. Please try again.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def payment_status_api(request, transaction_id):
+    """
+    API endpoint to check payment status
+    """
+    try:
+        result = payment_processor.query_payment_status(transaction_id)
+        
+        if result['success']:
+            return Response({
+                'success': True,
+                'data': result['data']
+            })
+        else:
+            return Response({
+                'success': False,
+                'message': result['message']
+            }, status=status.HTTP_404_NOT_FOUND)
+    
+    except Exception as e:
+        logger.error(f"Error querying payment status: {str(e)}")
+        return Response({
+            'success': False,
+            'message': 'Error querying payment status'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def retry_payment(request, transaction_id):
+    """
+    API endpoint to retry failed payment
+    """
+    try:
+        result = payment_processor.retry_failed_payment(transaction_id)
+        
+        if result['success']:
+            return Response({
+                'success': True,
+                'data': {
+                    'transaction_id': result['transaction_id'],
+                    'checkout_request_id': result.get('checkout_request_id'),
+                    'message': result['message']
+                }
+            })
+        else:
+            return Response({
+                'success': False,
+                'message': result['message']
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    except Exception as e:
+        logger.error(f"Error retrying payment: {str(e)}")
+        return Response({
+            'success': False,
+            'message': 'Error retrying payment'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# =============================================================================
+# KCB BUNI WEBHOOK ENDPOINTS
+# =============================================================================
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def kcb_callback(request):
+    """
+    KCB Buni payment callback endpoint
+    This endpoint receives payment confirmations from KCB Buni
+    """
+    try:
+        # Log the incoming request
+        logger.info(f"KCB Buni callback received from {request.META.get('REMOTE_ADDR')}")
+        
+        if not request.body:
+            logger.error("Empty callback body received")
+            return JsonResponse({'ResultCode': 1, 'ResultDesc': 'Empty request body'})
+        
+        try:
+            callback_data = json.loads(request.body.decode('utf-8'))
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in callback: {str(e)}")
+            return JsonResponse({'ResultCode': 1, 'ResultDesc': 'Invalid JSON format'})
+        
+        logger.info(f"Callback data structure: {json.dumps(callback_data, indent=2)}")
+        
+        # Process callback with payment processor
+        result = payment_processor.handle_payment_callback(callback_data)
+        
+        if result['success']:
+            logger.info(f"Callback processed successfully: {result.get('transaction_id')}")
+            return JsonResponse({
+                'ResultCode': 0,
+                'ResultDesc': 'Callback processed successfully'
+            })
+        else:
+            logger.error(f"Callback processing failed: {result['message']}")
+            return JsonResponse({
+                'ResultCode': 1,
+                'ResultDesc': result['message']
+            })
+    
+    except Exception as e:
+        logger.error(f"Critical error processing KCB callback: {str(e)}")
+        return JsonResponse({
+            'ResultCode': 1,
+            'ResultDesc': 'Internal server error'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def kcb_timeout(request):
+    """
+    KCB Buni timeout callback endpoint
+    Called when payment times out
+    """
+    try:
+        logger.info("KCB Buni timeout callback received")
+        
+        if request.body:
+            try:
+                callback_data = json.loads(request.body.decode('utf-8'))
+                logger.info(f"Timeout callback data: {json.dumps(callback_data, indent=2)}")
+                
+                # Handle timeout logic here if needed
+                # For now, just log and acknowledge
+                
+            except json.JSONDecodeError:
+                logger.warning("Invalid JSON in timeout callback")
         
         return JsonResponse({
-            'status': 'success',
-            'transaction_id': transaction.transaction_id,
-            'amount': float(transaction.amount),
-            'message': 'Payment initiated. Please check your phone for STK Push.'
+            'ResultCode': 0,
+            'ResultDesc': 'Timeout callback received'
         })
     
-    except json.JSONDecodeError:
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
-        logger.error(f"Error initiating payment: {str(e)}")
-        return JsonResponse({'error': 'Internal error'}, status=500)
+        logger.error(f"Error processing timeout callback: {str(e)}")
+        return JsonResponse({
+            'ResultCode': 1,
+            'ResultDesc': 'Error processing timeout'
+        })
 
 
-def api_payment_status(request, transaction_id):
-    """API endpoint to check payment status"""
+# =============================================================================
+# ADMIN VIEWS
+# =============================================================================
+
+@admin_required
+def payment_dashboard(request):
+    """
+    Admin dashboard for payment management
+    """
+    # Recent transactions
+    recent_transactions = PaymentTransaction.objects.select_related(
+        'user', 'plan'
+    ).order_by('-created_at')[:20]
+    
+    # Payment statistics
+    today = timezone.now().date()
+    stats = {
+        'total_transactions': PaymentTransaction.objects.count(),
+        'successful_payments': PaymentTransaction.objects.filter(status='completed').count(),
+        'pending_payments': PaymentTransaction.objects.filter(status='processing').count(),
+        'failed_payments': PaymentTransaction.objects.filter(status='failed').count(),
+        'today_transactions': PaymentTransaction.objects.filter(created_at__date=today).count(),
+        'today_revenue': PaymentTransaction.objects.filter(
+            created_at__date=today, 
+            status='completed'
+        ).aggregate(total=models.Sum('amount'))['total'] or 0,
+    }
+    
+    context = {
+        'recent_transactions': recent_transactions,
+        'stats': stats
+    }
+    
+    return render(request, 'payments/dashboard.html', context)
+
+
+@admin_required
+def transaction_detail(request, transaction_id):
+    """
+    Detailed view of a specific transaction
+    """
+    transaction = get_object_or_404(PaymentTransaction, transaction_id=transaction_id)
+    
+    # Get related STK Push request if exists
+    stk_request = getattr(transaction, 'stk_request', None)
+    
+    # Get all callbacks for this transaction
+    callbacks = transaction.callbacks.order_by('-created_at')
+    
+    context = {
+        'transaction': transaction,
+        'stk_request': stk_request,
+        'callbacks': callbacks
+    }
+    
+    return render(request, 'payments/transaction_detail.html', context)
+
+
+# =============================================================================
+# TEST AND UTILITY ENDPOINTS
+# =============================================================================
+
+@admin_required
+def test_kcb_connection(request):
+    """
+    Test KCB Buni API connection
+    """
+    try:
+        test_result = kcb_client.test_connection()
+        
+        return JsonResponse({
+            'success': test_result['success'],
+            'message': test_result['message'],
+            'environment': test_result['environment'],
+            'base_url': test_result['base_url'],
+            'timestamp': timezone.now().isoformat()
+        })
+    
+    except Exception as e:
+        logger.error(f"Error testing KCB connection: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': f'Connection test failed: {str(e)}',
+            'timestamp': timezone.now().isoformat()
+        })
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def available_plans(request):
+    """
+    Get available WiFi plans for purchase
+    """
+    try:
+        plans = WifiPlan.objects.filter(is_active=True).order_by('price')
+        
+        plans_data = []
+        for plan in plans:
+            plan_data = {
+                'id': str(plan.id),
+                'name': plan.name,
+                'price': float(plan.price),
+                'currency': 'KES',
+                'description': plan.description,
+                'plan_type': plan.plan_type,
+                'features': []
+            }
+            
+            # Add duration info
+            if plan.duration_minutes:
+                if plan.duration_minutes < 60:
+                    plan_data['duration'] = f"{plan.duration_minutes} minutes"
+                elif plan.duration_minutes < 1440:
+                    plan_data['duration'] = f"{plan.duration_minutes // 60} hours"
+                else:
+                    plan_data['duration'] = f"{plan.duration_minutes // 1440} days"
+                plan_data['features'].append(f"Duration: {plan_data['duration']}")
+            
+            # Add data limit info
+            if plan.data_limit_mb:
+                if plan.data_limit_mb < 1024:
+                    plan_data['data_limit'] = f"{plan.data_limit_mb} MB"
+                else:
+                    plan_data['data_limit'] = f"{plan.data_limit_mb / 1024:.1f} GB"
+                plan_data['features'].append(f"Data: {plan_data['data_limit']}")
+            
+            # Add speed info
+            if plan.download_speed_kbps:
+                if plan.download_speed_kbps < 1024:
+                    speed = f"{plan.download_speed_kbps} Kbps"
+                else:
+                    speed = f"{plan.download_speed_kbps / 1024:.1f} Mbps"
+                plan_data['features'].append(f"Speed: {speed}")
+            
+            plans_data.append(plan_data)
+        
+        return Response({
+            'success': True,
+            'data': {
+                'plans': plans_data,
+                'count': len(plans_data),
+                'environment': settings.KCB_BUNI_ENVIRONMENT
+            }
+        })
+    
+    except Exception as e:
+        logger.error(f"Error fetching plans: {str(e)}")
+        return Response({
+            'success': False,
+            'message': 'Error fetching available plans'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def payment_status_page(request, transaction_id):
+    """
+    Customer-facing payment status page
+    """
     try:
         transaction = get_object_or_404(PaymentTransaction, transaction_id=transaction_id)
         
-        return JsonResponse({
-            'transaction_id': transaction.transaction_id,
-            'status': transaction.status,
-            'amount': float(transaction.amount),
-            'phone_number': transaction.phone_number,
-            'plan': {
-                'name': transaction.plan.name,
-                'type': transaction.plan.plan_type,
-                'duration_minutes': transaction.plan.duration_minutes,
-                'data_limit_mb': transaction.plan.data_limit_mb,
-            },
-            'created_at': transaction.created_at.isoformat(),
-            'completed_at': transaction.completed_at.isoformat() if transaction.completed_at else None,
-            'failure_reason': transaction.failure_reason if transaction.status == 'failed' else None,
+        context = {
+            'transaction': transaction,
+            'plan': transaction.plan,
+            'user': transaction.user,
+            'can_retry': transaction.can_retry,
+        }
+        
+        return render(request, 'payments/status.html', context)
+    
+    except Exception as e:
+        logger.error(f"Error loading payment status page: {str(e)}")
+        return render(request, 'payments/error.html', {
+            'error_message': 'Transaction not found'
         })
-    
-    except Exception as e:
-        logger.error(f"Error getting payment status: {str(e)}")
-        return JsonResponse({'error': 'Internal error'}, status=500)
-
-
-# Utility functions
-def activate_user_plan(transaction):
-    """Activate a user's plan after successful payment"""
-    try:
-        user = transaction.user
-        plan = transaction.plan
-        
-        # Update user status
-        user.current_plan = plan
-        user.status = 'active'
-        user.plan_started_at = timezone.now()
-        
-        # Set expiration based on plan type
-        if plan.plan_type == 'time' and plan.duration_minutes:
-            user.plan_expires_at = timezone.now() + timedelta(minutes=plan.duration_minutes)
-        elif plan.plan_type == 'data' and plan.data_limit_mb:
-            # Data plans don't expire by time, but by usage
-            user.plan_expires_at = timezone.now() + timedelta(days=30)  # 30-day validity
-        else:
-            # Unlimited or other types - set to 24 hours by default
-            user.plan_expires_at = timezone.now() + timedelta(hours=24)
-        
-        user.save()
-        
-        logger.info(f"User plan activated: {user.phone_number} - {plan.name}")
-        
-        # Create the user in MikroTik
-        try:
-            create_mikrotik_user(user)
-            logger.info(f"MikroTik user created for {user.phone_number}")
-        except Exception as e:
-            logger.error(f"Failed to create MikroTik user for {user.phone_number}: {str(e)}")
-            # Don't fail the entire activation if MikroTik creation fails
-        
-        return True
-    except Exception as e:
-        logger.error(f"Error activating user plan: {str(e)}")
-        return False
-
-
-def initiate_kcb_buni_payment(phone_number, amount, transaction_id):
-    """Initiate KCB Buni payment (placeholder function)"""
-    # This is a placeholder function for KCB Buni API integration
-    # You would implement the actual API calls here
-    
-    api_url = settings.KCB_BUNI_BASE_URL + '/api/v1/payments/initiate'
-    headers = {
-        'Authorization': f'Bearer {settings.KCB_BUNI_API_KEY}',
-        'Content-Type': 'application/json'
-    }
-    
-    payload = {
-        'phone_number': phone_number,
-        'amount': str(amount),
-        'transaction_id': transaction_id,
-        'callback_url': request.build_absolute_uri('/payments/callback/kcb-buni/'),
-    }
-    
-    try:
-        response = requests.post(api_url, json=payload, headers=headers, timeout=30)
-        return response.json()
-    except requests.RequestException as e:
-        logger.error(f"KCB Buni API error: {str(e)}")
-        return None

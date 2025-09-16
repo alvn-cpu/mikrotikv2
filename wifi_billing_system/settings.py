@@ -205,11 +205,23 @@ MIKROTIK_API_HOST = config('MIKROTIK_API_HOST', default='192.168.1.1')
 MIKROTIK_API_USERNAME = config('MIKROTIK_API_USERNAME', default='admin')
 MIKROTIK_API_PASSWORD = config('MIKROTIK_API_PASSWORD', default='')
 
-# KCB Buni API Settings
-KCB_BUNI_BASE_URL = config('KCB_BUNI_BASE_URL', default='https://api.kcbbuni.com')
-KCB_BUNI_CLIENT_ID = config('KCB_BUNI_CLIENT_ID', default='')
-KCB_BUNI_CLIENT_SECRET = config('KCB_BUNI_CLIENT_SECRET', default='')
-KCB_BUNI_API_KEY = config('KCB_BUNI_API_KEY', default='')
+# KCB Buni API Settings - Corrected URLs
+KCB_BUNI_ENVIRONMENT = config('KCB_BUNI_ENVIRONMENT', default='mock')  # mock, sandbox, or production
+
+# KCB Buni URLs based on environment:
+# Mock: For testing when sandbox is not accessible  
+# Sandbox: https://sandbox.kcbgroup.com (when accessible)
+# Production: https://api.kcbgroup.com (when approved)
+if config('KCB_BUNI_ENVIRONMENT', default='mock') == 'mock':
+    KCB_BUNI_BASE_URL = 'https://mock.kcb.local'  # Mock for testing
+elif config('KCB_BUNI_ENVIRONMENT', default='mock') == 'sandbox':
+    KCB_BUNI_BASE_URL = config('KCB_BUNI_BASE_URL', default='https://sandbox.kcbgroup.com')
+else:
+    KCB_BUNI_BASE_URL = config('KCB_BUNI_BASE_URL', default='https://api.kcbgroup.com')
+
+KCB_BUNI_CLIENT_ID = config('KCB_BUNI_CLIENT_ID', default='iKcMWAgpnujsb08fWMsmaZEIL0Ya')
+KCB_BUNI_CLIENT_SECRET = config('KCB_BUNI_CLIENT_SECRET', default='OWEqLcPtwGI8wfNj71dYQ3fyksIa')
+KCB_BUNI_SHORTCODE = config('KCB_BUNI_SHORTCODE', default='174379')  # Business shortcode
 
 # Static and Media Files
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -277,6 +289,10 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Site URL Configuration (for login page generation)
 SITE_URL = config('SITE_URL', default='http://127.0.0.1:8000')
+
+# KCB Buni Callback URLs (defined after SITE_URL)
+KCB_BUNI_CALLBACK_URL = config('KCB_BUNI_CALLBACK_URL', default=f'{SITE_URL}/payments/kcb/callback/')
+KCB_BUNI_TIMEOUT_URL = config('KCB_BUNI_TIMEOUT_URL', default=f'{SITE_URL}/payments/kcb/timeout/')
 
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
