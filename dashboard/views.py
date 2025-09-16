@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.admin.views.decorators import staff_member_required
+from authentication.decorators import admin_required, staff_required
 from django.db.models import Count, Sum, Avg, Q
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
@@ -35,7 +35,7 @@ except ImportError:
     pd = None
 
 
-@staff_member_required
+@admin_required
 def admin_dashboard(request):
     """Main admin dashboard with analytics and visualizations"""
     
@@ -298,7 +298,7 @@ def create_session_chart(session_data):
 
 
 # Plan Management Views
-@staff_member_required
+@admin_required
 @csrf_exempt
 def create_plan(request):
     """Create a new WiFi plan"""
@@ -349,7 +349,7 @@ def create_plan(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
 
-@staff_member_required
+@admin_required
 @csrf_exempt
 def update_plan(request, plan_id):
     """Update a WiFi plan"""
@@ -401,7 +401,7 @@ def update_plan(request, plan_id):
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
 
-@staff_member_required
+@admin_required
 @csrf_exempt
 def delete_plan(request, plan_id):
     """Delete a WiFi plan"""
@@ -426,7 +426,7 @@ def delete_plan(request, plan_id):
         return JsonResponse({'success': False, 'message': f'Error deleting plan: {str(e)}'})
 
 
-@staff_member_required
+@admin_required
 def get_plan(request, plan_id):
     """Get plan details for editing"""
     plan = get_object_or_404(WifiPlan, id=plan_id)
@@ -461,7 +461,7 @@ def get_plan(request, plan_id):
 
 
 # Station Management Views
-@staff_member_required
+@admin_required
 @csrf_exempt
 def create_station(request):
     """Create a new MikroTik station"""
@@ -516,7 +516,7 @@ def create_station(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
 
-@staff_member_required
+@admin_required
 @csrf_exempt
 def update_station(request, station_id):
     """Update a MikroTik station"""
@@ -560,7 +560,7 @@ def update_station(request, station_id):
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
 
-@staff_member_required
+@admin_required
 def delete_station(request, station_id):
     """Delete a MikroTik station"""
     station = get_object_or_404(RouterConfig, id=station_id)
@@ -572,7 +572,7 @@ def delete_station(request, station_id):
         return JsonResponse({'success': False, 'message': str(e)})
 
 
-@staff_member_required
+@admin_required
 def get_station(request, station_id):
     """Get station details for editing"""
     station = get_object_or_404(RouterConfig, id=station_id)
@@ -602,7 +602,7 @@ def get_station(request, station_id):
     })
 
 
-@staff_member_required
+@admin_required
 def download_station_config(request, station_id):
     """Generate and download complete station configuration package as ZIP"""
     station = get_object_or_404(RouterConfig, id=station_id)
@@ -634,7 +634,7 @@ def download_station_config(request, station_id):
     return response
 
 
-@staff_member_required
+@admin_required
 def download_station_config_file(request, station_id):
     """Download only the MikroTik configuration file (.rsc)"""
     station = get_object_or_404(RouterConfig, id=station_id)
@@ -648,7 +648,7 @@ def download_station_config_file(request, station_id):
     return response
 
 
-@staff_member_required
+@admin_required
 def download_station_login_page(request, station_id):
     """Download only the custom login page (.html)"""
     station = get_object_or_404(RouterConfig, id=station_id)
@@ -663,7 +663,7 @@ def download_station_login_page(request, station_id):
 
 
 # Additional Views for New Dashboard Sections
-@staff_member_required
+@admin_required
 def get_users_data(request):
     """Get users data for the users section"""
     users = WifiUser.objects.all().order_by('-created_at')
@@ -684,7 +684,7 @@ def get_users_data(request):
     return JsonResponse({'users': user_data})
 
 
-@staff_member_required
+@admin_required
 def get_transactions_data(request):
     """Get transactions data for the transactions section"""
     transactions = PaymentTransaction.objects.all().order_by('-created_at')[:100]
@@ -704,7 +704,7 @@ def get_transactions_data(request):
     return JsonResponse({'transactions': transaction_data})
 
 
-@staff_member_required
+@admin_required
 def get_sessions_data(request):
     """Get active sessions data"""
     try:
@@ -728,7 +728,7 @@ def get_sessions_data(request):
         return JsonResponse({'sessions': [], 'error': str(e)})
 
 
-@staff_member_required
+@admin_required
 def export_transactions_csv(request):
     """Export transactions to CSV"""
     import csv
@@ -753,7 +753,7 @@ def export_transactions_csv(request):
     return response
 
 
-@staff_member_required
+@admin_required
 def test_payment_credentials(request, station_id):
     """Test KCB payment credentials for a station"""
     station = get_object_or_404(RouterConfig, id=station_id)

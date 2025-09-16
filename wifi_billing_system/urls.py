@@ -14,7 +14,6 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
 from django.urls import path, include
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -26,9 +25,16 @@ from fix_admin_web import fix_admin_permissions
 def favicon_view(request):
     return HttpResponse(status=204)  # No Content
 
+# Admin redirect handler - redirects all admin URLs to signin
+def admin_redirect(request, path=None):
+    """Redirect admin URLs to custom login with next parameter"""
+    return redirect('/auth/login/?next=' + request.get_full_path())
+
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # Redirect all admin URLs to custom signin
+    path('admin/', admin_redirect, name='admin_redirect'),
+    path('admin/<path:path>', admin_redirect, name='admin_redirect_all'),
     path('dashboard/', include('dashboard.urls')),
     path('mikrotik/', include('mikrotik_integration.urls')),
     path('auth/', include('authentication.urls')),

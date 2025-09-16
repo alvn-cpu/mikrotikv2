@@ -51,7 +51,7 @@ ACCOUNT_ADAPTER = 'authentication.adapters.CustomAccountAdapter'
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    # 'django.contrib.admin',  # Removed - using custom admin interface
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',

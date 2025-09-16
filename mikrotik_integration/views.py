@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.contrib.admin.views.decorators import staff_member_required
+from authentication.decorators import admin_required
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from django.db import models
@@ -11,7 +11,7 @@ from radius.models import RadiusAccounting
 import json
 
 
-@staff_member_required
+@admin_required
 def router_status_api(request):
     """API endpoint for real-time router status"""
     routers_data = []
@@ -53,7 +53,7 @@ def router_status_api(request):
     })
 
 
-@staff_member_required
+@admin_required
 def active_sessions_api(request):
     """API endpoint for active sessions data"""
     sessions_data = []
@@ -86,7 +86,7 @@ def active_sessions_api(request):
     })
 
 
-@staff_member_required
+@admin_required
 def session_statistics_api(request):
     """API endpoint for session statistics"""
     # Current statistics
@@ -143,7 +143,7 @@ def session_statistics_api(request):
     })
 
 
-@staff_member_required
+@admin_required
 @csrf_exempt
 def disconnect_user_api(request):
     """API endpoint to disconnect a user"""
@@ -199,7 +199,7 @@ def disconnect_user_api(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@staff_member_required
+@admin_required
 def sync_sessions_api(request):
     """API endpoint to trigger session sync"""
     try:
