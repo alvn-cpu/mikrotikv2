@@ -16,7 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.http import HttpResponse
 from debug_views import health_check, debug_info
+
+# Simple favicon handler
+def favicon_view(request):
+    return HttpResponse(status=204)  # No Content
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,4 +33,6 @@ urlpatterns = [
     # Temporary debug endpoints
     path('health/', health_check, name='health_check'),
     path('debug/', debug_info, name='debug_info'),
+    # Favicon handler to prevent 400 errors
+    path('favicon.ico', favicon_view, name='favicon'),
 ]

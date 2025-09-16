@@ -29,8 +29,15 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-%p8tp-#_ex9oxw15b!g9m
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 # Parse allowed hosts from environment variable or use defaults
-allowed_hosts = config('ALLOWED_HOSTS', default='localhost,127.0.0.1')
-ALLOWED_HOSTS = [host.strip() for host in allowed_hosts.split(',')]
+# Temporary: Allow all hosts for initial Railway testing
+allowed_hosts = config('ALLOWED_HOSTS', default='*')
+if allowed_hosts == '*':
+    ALLOWED_HOSTS = ['*']  # Allow all hosts for testing
+else:
+    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts.split(',')]
+
+# Ensure trailing slashes are handled properly
+APPEND_SLASH = True
 
 
 # Application definition
